@@ -40,7 +40,7 @@ def run_experiment(
     # specify the path where the model should be saved
     model_dir = os.getcwd() + f'/models/{save_path}/{seed}'
 
-    wrappers = WrapperStack().add(SingleAgentWrapper)
+    wrappers = WrapperStack()#.add(SingleAgentWrapper)
 
     # start training
     runner = SingleAgentTrainerMORL(
