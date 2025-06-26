@@ -9,6 +9,7 @@ from typing import Optional, Tuple, Union
 
 import gymnasium as gym
 import numpy as np
+from gymnasium.envs.registration import EnvSpec
 
 from commonpower.modeling.base import ControllableModelEntity
 from commonpower.modeling.history import ModelHistory
@@ -341,3 +342,134 @@ class ControlEnv(gym.Env):
                     scaled_action[ctrl_id][node_id][el_id] = new_action
 
         return scaled_action
+
+
+class MORLEnv(gym.Env):
+    def __init__(
+        self,
+        system,
+        continuous_control=False,
+        episode_length=24,
+        fixed_start=None,
+        normalize_action_space=True,
+        history=None,
+        scalarisation_fn=None,  # Default to None to handle vectors
+        reward_dim=2,  # Specify reward dimensionality
+    ):
+        # Create the base environment
+        self.base_env = ControlEnv(
+            system=system,
+            continuous_control=continuous_control,
+            episode_length=episode_length,
+            fixed_start=fixed_start,
+            normalize_action_space=normalize_action_space,
+            history=history,
+            scalarisation_fn=None,  # Handle scalarization yourself
+        )
+
+        # Make sure there's only one agent
+        if len(self.base_env.controllers) > 1:
+            raise ValueError("MyMORLEnvironment cannot handle more than 1 agent")
+
+        self.ctrl_id = list(self.base_env.controllers.keys())[0]
+
+        # Add MORL-specific attributes
+        self.reward_dim = reward_dim
+        self.custom_scalarisation_fn = scalarisation_fn
+
+        # Define reward space for MORL algorithms
+        self.reward_space = gym.spaces.Box(
+            low=np.array([-float('inf')] * reward_dim), high=np.array([float('inf')] * reward_dim), dtype=np.float32
+        )
+
+        # Transform observation space from dictionary to box (same as SingleAgentWrapper)
+        ctrl_obs_space = self.base_env.observation_space[self.ctrl_id]
+        obs_low = np.array([])
+        obs_high = np.array([])
+
+        for el_id, el_obs in recursive_items(ctrl_obs_space):
+            obs_low = np.concatenate((obs_low, el_obs.low))
+            obs_high = np.concatenate((obs_high, el_obs.high))
+
+        self.observation_space = gym.spaces.Box(low=obs_low, high=obs_high, dtype=np.float64)
+
+        # Transform action space from dictionary to box (same as SingleAgentWrapper)
+        ctrl_act_space = self.base_env.action_space[self.ctrl_id]
+        act_low = np.array([])
+        act_high = np.array([])
+        for n_id, n_act_space in ctrl_act_space.items():
+            for el in n_act_space.values():
+                act_low = np.concatenate((act_low, el.low))
+                act_high = np.concatenate((act_high, el.high))
+        self.action_space = gym.spaces.Box(low=act_low, high=act_high, dtype=np.float64)
+        self.spec = EnvSpec(
+            id="MyMORLEnvironment-v0",
+            entry_point=None,
+            max_episode_steps=episode_length,
+        )
+
+    def _flatten_observation(self, obs_dict):
+        """Flatten a nested observation dictionary into a 1D array"""
+        flat_obs = np.array([])
+        ctrl_obs = obs_dict[self.ctrl_id]
+
+        for el_id, el_obs in recursive_items(ctrl_obs):
+            flat_obs = np.concatenate((flat_obs, el_obs))
+
+        return flat_obs
+
+    def _unflatten_action(self, action):
+        """Convert a flat action array back to the nested dictionary format"""
+        # Create the dictionary structure
+        action_dict = {self.ctrl_id: {}}
+        ctrl_act_space = self.base_env.action_space[self.ctrl_id]
+
+        # Fill in the action values
+        idx = 0
+        for n_id, n_act_space in ctrl_act_space.items():
+            action_dict[self.ctrl_id][n_id] = {}
+            for el_id, el_space in n_act_space.items():
+                size = np.prod(el_space.shape)
+                action_dict[self.ctrl_id][n_id][el_id] = action[idx : idx + size].reshape(el_space.shape)
+                idx += size
+
+        return action_dict
+
+    def reset(self, *, seed=None, options=None):
+        obs_dict, info = self.base_env.reset(seed=seed, options=options)
+        flat_obs = self._flatten_observation(obs_dict)
+        return flat_obs, info
+
+    def step(self, action):
+        # Convert flat action to dictionary
+        action_dict = self._unflatten_action(action)
+
+        # Step the environment
+        obs_dict, rewards, terminated, truncated, info = self.base_env.step(action_dict)
+
+        # Flatten the observation
+        flat_obs = self._flatten_observation(obs_dict)
+
+        # Extract the reward vector for the single agent
+        reward_vector = rewards[self.ctrl_id]
+
+        # Optionally apply scalarization for logging
+        if self.custom_scalarisation_fn is not None:
+            scalar_reward = self.custom_scalarisation_fn(reward_vector)
+            info["scalar_reward"] = scalar_reward
+
+        return flat_obs, reward_vector, terminated, truncated, info
+
+    def set_mode(self, mode):
+        return self.base_env.set_mode(mode)
+
+
+def recursive_items(dictionary):
+    """
+    Recursive extraction of all values in a nested dictionary or gym.spaces.Dict
+    """
+    for key, value in dictionary.items():
+        if isinstance(value, (gym.spaces.Dict, dict)):
+            yield from recursive_items(value)
+        else:
+            yield (key, value)

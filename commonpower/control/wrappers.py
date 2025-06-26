@@ -164,6 +164,7 @@ class SingleAgentWrapper(gym.Wrapper):
 
         # transform observation and action space from dictionary to box
         ctrl_obs_space = self.env.observation_space[self.ctrl_id]
+
         obs_low = np.array([])
         obs_high = np.array([])
 
@@ -225,6 +226,7 @@ class SingleAgentWrapper(gym.Wrapper):
                 act_count = act_count + num_act
 
         obs, reward, terminated, truncated, info = self.env.step(dummy_action)
+
         reward = reward[self.ctrl_id]
         obs = self._unpack_obs(obs)
         if terminated or truncated:

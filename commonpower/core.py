@@ -18,7 +18,7 @@ from pyomo.core import ConcreteModel, Expression, Objective, Set, quicksum, valu
 from pyomo.opt import TerminationCondition
 from pyomo.opt.solver import OptSolver
 
-from commonpower.control.environments import ControlEnv, default_scalarisation_fn
+from commonpower.control.environments import ControlEnv, MORLEnv, default_scalarisation_fn
 from commonpower.control.observation_handling import Observer
 from commonpower.data_forecasting import DataProvider
 from commonpower.modeling.base import ControllableModelEntity, ElementTypes, ModelElement, ModelEntity
@@ -374,6 +374,7 @@ class System(ControllableModelEntity):
         normalize_actions: bool = True,
         history: ModelHistory = None,
         scalarisation_fn: Optional[callable] = default_scalarisation_fn,
+        morl: bool = False,
     ):
         """
         Creates an environment which encapsulates the power system in a way that RL algorithms can interact with it.
@@ -394,15 +395,27 @@ class System(ControllableModelEntity):
         # ToDo: multiple threads using SubprocVecEnv, one thread using DummyVecEnv?
 
         def init_env():
-            env = ControlEnv(
-                system=self,
-                continuous_control=self.continuous_control,
-                episode_length=episode_length,
-                fixed_start=fixed_start,
-                normalize_action_space=normalize_actions,
-                history=history,
-                scalarisation_fn=scalarisation_fn,
-            )
+            if morl:
+                env = MORLEnv(
+                    system=self,
+                    continuous_control=self.continuous_control,
+                    episode_length=episode_length,
+                    fixed_start=fixed_start,
+                    normalize_action_space=normalize_actions,
+                    history=history,
+                    scalarisation_fn=scalarisation_fn,
+                )
+            else:
+                env = ControlEnv(
+                    system=self,
+                    continuous_control=self.continuous_control,
+                    episode_length=episode_length,
+                    fixed_start=fixed_start,
+                    normalize_action_space=normalize_actions,
+                    history=history,
+                    scalarisation_fn=scalarisation_fn,
+                )
+
             if wrapper:
                 env = wrapper(env)
             return env

@@ -267,7 +267,7 @@ class BaseTrainer(BaseRunner):
         self.episode_length = episode_length
         self.scalarisation_fn = scalarisation_fn
 
-    def prepare_run(self):
+    def prepare_run(self, is_morl=False):
         """
         In addition to the preparation in BaseRunner, we also instantiate an environment function as an API for the RL
         training.
@@ -279,7 +279,6 @@ class BaseTrainer(BaseRunner):
         # limit date range of system to only start training after changes
         if self.limited_date_range is not None:
             self.sys.limit_date_range(start=self.limited_date_range[0], end=self.limited_date_range[1])
-
         # create environment function according to gymnasium API
         if len(list(self.sys.get_controllers(ctrl_types=[RLBaseController]))) >= 1:
             self.env = self.sys.create_env_func(
@@ -288,6 +287,7 @@ class BaseTrainer(BaseRunner):
                 fixed_start=self.fixed_start,
                 normalize_actions=self.normalize_actions,
                 scalarisation_fn=self.scalarisation_fn,
+                morl=is_morl,
             )
 
 
@@ -536,7 +536,7 @@ class SingleAgentTrainerMORL(BaseTrainer):
             None
 
         """
-        super().prepare_run()
+        super().prepare_run(is_morl=True)
         TrainAlg = self.alg_config.algorithm
         if not self.policy:
             if self.logger is not None:
@@ -560,13 +560,13 @@ class SingleAgentTrainerMORL(BaseTrainer):
                 **wandb_kwargs,
                 **algo_kwargs,  # convert pydantic Model to dictionary
             )
-
         self.eval_env = self.sys.create_env_func(
             episode_length=self.episode_length,
             wrapper=self.wrapper,
             fixed_start=self.fixed_start,
             normalize_actions=self.normalize_actions,
             scalarisation_fn=self.scalarisation_fn,
+            morl=True,
         )
 
     def finish_run(self):
