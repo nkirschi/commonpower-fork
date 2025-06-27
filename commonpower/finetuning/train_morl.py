@@ -40,6 +40,9 @@ def run_experiment(
     # specify the path where the model should be saved
     model_dir = os.getcwd() + f'/models/{save_path}/{seed}'
 
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir, exist_ok=True)
+
     wrappers = WrapperStack()  # .add(SingleAgentWrapper)
 
     # start training
