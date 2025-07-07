@@ -64,7 +64,7 @@ if __name__ == "__main__":
     n_eps = 100
     approach = Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty
-    scenario_constructor = Scenario.ConstantPricesScenario
+    scenario_constructor = Scenario.AddedEVScenario
 
     stage = Stage.Train
     forecast_length = 6

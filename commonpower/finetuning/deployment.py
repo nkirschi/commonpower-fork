@@ -106,7 +106,7 @@ def run_deployment(
 if __name__ == "__main__":
     approach = Approach.WithProjectionSafeguard  # Approach.OptimalController
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
-    scenario_constructor = Scenario.ConstantPricesScenario
+    scenario_constructor = Scenario.AddedEVScenario
     save_path = f'{scenario_constructor}/{approach}/{penalty}'
     # Set the evaluation time frame - one year starting on January 1st
     # (quite time intensive, could also change to evaluating over multiple weeks during the year but less accurate)
