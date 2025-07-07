@@ -17,7 +17,9 @@ from commonpower.utils.cp_exceptions import ControllerError
 
 
 def default_scalarisation_fn(reward_vector: np.ndarray) -> float:
-    return reward_vector[0]  # consider only the electricity cost
+    cost = reward_vector[0]
+    penalty = reward_vector[1]
+    return cost + penalty
 
 
 class ControlEnv(gym.Env):
@@ -140,9 +142,7 @@ class ControlEnv(gym.Env):
         }
         # rewards are vectors of negative cost and safety penalty
         rewards = {
-            agent: np.array([-agent_cost, -self.controllers[agent].history["safety_penalty"][-1][1]])
-            for agent, agent_cost in costs.items()
-            if agent in self.controllers.keys()
+            agent: np.array([-costs[agent], -info["safety_penalties"][agent]]) for agent in self.controllers.keys()
         }
         # update history with reward penalty
         for agent_id, agent in self.controllers.items():

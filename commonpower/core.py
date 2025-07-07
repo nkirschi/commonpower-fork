@@ -506,8 +506,8 @@ class System(ControllableModelEntity):
         Returns:
             dict: dictionary of observations of all controllers {controller_id: controller_observation} AFTER applying
             the actions to the system
-            dict: dictionary of rewards of all controllers {controller_id: controller_observation} AFTER applying
-            the actions to the system. The rewards depend on the current state of the system and the action applied
+            dict: dictionary of costs of all controllers {controller_id: controller_observation} AFTER applying
+            the actions to the system. The costs depend on the current state of the system and the action applied
             in this state, as well as on whether the action had to be corrected due to safety constraints.
             dict: additional information
 
@@ -554,9 +554,6 @@ class System(ControllableModelEntity):
         for ctrl_id, ctrl in self.controllers.items():
             costs[ctrl_id] = ctrl.get_cost(inst)
 
-        # add verification costs
-        costs = {agent: cost + penalties[agent] for agent, cost in costs.items()}
-
         if history:
             history.log(inst, self.t)
 
@@ -571,7 +568,7 @@ class System(ControllableModelEntity):
         # get observations
         obs, _ = self.observe()
 
-        info = {}
+        info = {'safety_penalties': penalties}
         return obs, costs, info
 
     def observe(self) -> dict:

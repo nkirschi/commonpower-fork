@@ -119,19 +119,21 @@ class TestMORLFunctionality(unittest.TestCase):
         original_step = env.sys.step
 
         def mock_sys_step(*args, **kwargs):
-            obs, _, info = original_step(*args, **kwargs)
+            obs, _, _ = original_step(*args, **kwargs)
             mock_costs = {self.agent.name: 50.0}
-            self.agent.history["safety_penalty"][-1] = (None, 5.0)  # (timestamp, penalty_value)
-            return obs, mock_costs, info
+            mock_info = {"safety_penalties": {self.agent.name: 5.0}}    
+            return obs, mock_costs, mock_info
 
         env.sys.step = mock_sys_step
 
         _, rewards, _, _, _ = env.step(dummy_action)
         scalar_reward = rewards[self.agent.name]
 
+        print(scalar_reward)
+
         # Check if correct calculation i.e the reward is a scalar equal to negative cost
-        self.assertIsInstance(scalar_reward, (float, np.floating), "Default reward should be a scalar.")
-        self.assertAlmostEqual(scalar_reward, -50.0, "Default reward should be the negative of the cost.")
+        self.assertIsInstance(scalar_reward, (float, np.floating), msg="Default reward should be a scalar.")
+        self.assertAlmostEqual(scalar_reward, -55.0, msg="Default reward should be the negative of the cost.")
 
     def test_control_env_applies_custom_linear_scalarization(self):
         """Tests that ControlEnv correctly applies custom linear scalarization function to the vectorized reward."""
@@ -147,8 +149,8 @@ class TestMORLFunctionality(unittest.TestCase):
         def mock_sys_step(*args, **kwargs):
             obs, _, info = original_step(*args, **kwargs)
             mock_costs = {self.agent.name: 100.0}
-            self.agent.history["safety_penalty"][-1] = (None, 10.0)
-            return obs, mock_costs, info
+            mock_info = {"safety_penalties": {self.agent.name: 10.0}}   
+            return obs, mock_costs, mock_info
 
         env.sys.step = mock_sys_step
 
