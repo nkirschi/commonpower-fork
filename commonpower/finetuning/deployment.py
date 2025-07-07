@@ -125,7 +125,8 @@ if __name__ == "__main__":
     if approach is Approach.OptimalController:
         seeds = [1]
     else:
-        seeds = [1, 2, 3, 4, 5]
+        # seeds = [1, 2, 3, 4, 5]
+        seeds = [42]
 
     for seed in seeds:
         scenario, deployment_runner = create_scenario(
