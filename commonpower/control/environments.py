@@ -147,6 +147,7 @@ class ControlEnv(gym.Env):
         # update history with reward penalty
         for agent_id, agent in self.controllers.items():
             agent.update_history({"reward_without_penalty": rewards[agent_id][0]})
+            agent.update_history({"reward": rewards[agent_id][0] + rewards[agent_id][1]})
         # get train history at end of episode:
         if terminated or truncated:
             self.train_history = {agent_id: copy(agent.history) for agent_id, agent in self.controllers.items()}
@@ -158,6 +159,7 @@ class ControlEnv(gym.Env):
                             [t[1] for t in self.train_history[agent_id]["reward_without_penalty"]]
                         ),
                         "n_corrections": np.sum([t[1] for t in self.train_history[agent_id]["action_corrected"]]),
+                        "reward": np.sum([t[1] for t in self.train_history[agent_id]["reward"]]),
                     }
                 )
 

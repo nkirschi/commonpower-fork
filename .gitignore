@@ -16,3 +16,4 @@ venv
 test_run/
 tuner/
 results/
+commonpower/finetuning/weights/*
