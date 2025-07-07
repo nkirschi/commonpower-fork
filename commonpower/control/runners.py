@@ -429,6 +429,7 @@ class SingleAgentTrainerMORL(BaseTrainer):
         self,
         sys: System,
         alg_config: MORL_MetaConfig,
+        ref_point: np.ndarray,
         global_controller: OptimalController = OptimalController("global"),
         policy: MOAgent = None,
         wrapper: gym.Wrapper = None,
@@ -496,6 +497,7 @@ class SingleAgentTrainerMORL(BaseTrainer):
         )
         self.callbacks = []
 
+        self.ref_point = ref_point
         self.alg_config = alg_config
         self.policy = policy
         if policy is not None and not isinstance(policy, PCN):
@@ -525,7 +527,6 @@ class SingleAgentTrainerMORL(BaseTrainer):
 
         self.prepare_run()
         total_timesteps = self.alg_config.total_steps
-        ref_point = np.array([-1000.0, -1000.0])  # TODO need informed choice of reference point
 
         adapter = None
         # Store original methods to restore later
@@ -539,7 +540,7 @@ class SingleAgentTrainerMORL(BaseTrainer):
 
         try:
             # Train the policy
-            self.policy.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=ref_point)
+            self.policy.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=self.ref_point)
 
             # Call on_training_end for callbacks
             if adapter:

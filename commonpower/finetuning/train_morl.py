@@ -45,11 +45,14 @@ def run_experiment(
 
     wrappers = WrapperStack().add(SingleAgentWrapper)
 
+    ref_point = calculate_ref_point(scenario_constructor)
+
     # start training
     runner = SingleAgentTrainerMORL(
         sys=train_sys,
         wrapper=wrappers.get_stack(),
         alg_config=train_config,
+        ref_point=ref_point,
         horizon=forecast_horizon,
         episode_length=episode_length,
         logger=logger,
@@ -59,6 +62,16 @@ def run_experiment(
         scalarisation_fn=scalarisation_fn,
     )
     runner.run(fixed_start=fixed_start)
+
+
+# TODO
+def calculate_ref_point(scenario_constructor):
+    if scenario_constructor == Scenario.AddedEVScenario:
+        calculated_worst_case_cost = 1000.0
+        action_space_diameter = 1000.0
+        return np.array([-calculated_worst_case_cost, -action_space_diameter])
+    else:
+        raise NotImplementedError("Reference point calculation for this scenario is not implemented.")
 
 
 if __name__ == "__main__":
@@ -75,7 +88,7 @@ if __name__ == "__main__":
     )
 
     for seed in seeds:
-        scenario, deployment_runner = create_scenario(
+        train_sys, deployment_runner = create_scenario(
             stage=stage,
             approach=approach,
             penalty=penalty,
@@ -107,7 +120,8 @@ if __name__ == "__main__":
             n_eps=n_eps,
             forecast_horizon=horizon,
             episode_length=episode_length,
-            train_sys=scenario,
+            train_sys=train_sys,
+            scenario_constructor=scenario_constructor.value,
             scalarisation_fn=None,
             fixed_start=start,
             limited_date_range=[start, end],
