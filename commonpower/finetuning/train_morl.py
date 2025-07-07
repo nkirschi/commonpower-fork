@@ -43,7 +43,7 @@ def run_experiment(
     if not os.path.exists(model_dir):
         os.makedirs(model_dir, exist_ok=True)
 
-    wrappers = WrapperStack()  # .add(SingleAgentWrapper)
+    wrappers = WrapperStack().add(SingleAgentWrapper)
 
     # start training
     runner = SingleAgentTrainerMORL(

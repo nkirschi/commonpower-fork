@@ -404,6 +404,7 @@ class System(ControllableModelEntity):
                     normalize_action_space=normalize_actions,
                     history=history,
                     scalarisation_fn=scalarisation_fn,
+                    wrapper=wrapper,
                 )
             else:
                 env = ControlEnv(
@@ -416,8 +417,9 @@ class System(ControllableModelEntity):
                     scalarisation_fn=scalarisation_fn,
                 )
 
-            if wrapper:
-                env = wrapper(env)
+                if wrapper:
+                    env = wrapper(env)
+
             return env
 
         self.env_func = init_env()

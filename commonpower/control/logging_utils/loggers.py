@@ -4,7 +4,7 @@ Collection of loggers for controller performance.
 from typing import Callable
 
 import wandb
-from stable_baselines3.common.logger import Logger, make_output_format
+from stable_baselines3.common.logger import KVWriter, Logger, make_output_format
 
 from commonpower.control.logging_utils.callbacks import (
     BaseCallback,
@@ -262,3 +262,154 @@ class MARLWandBLogger(BaseLogger):
 
         """
         wandb.finish()
+
+
+class WandBOutputFormat(KVWriter):
+    """
+    Output format for Weights & Biases.
+
+    :param project: W&B project name
+    :param name: W&B run name
+    :param entity: W&B entity name
+    :param config: Configuration dictionary for the run
+    """
+
+    def __init__(self, project=None, name=None, entity=None, config=None):
+        self.initialized = False
+        self.project = project
+        self.name = name
+        self.entity = entity
+        self.config = config
+
+    def _init_wandb(self):
+        if not self.initialized:
+            # Initialize wandb only if not already initialized
+            if wandb.run is None:
+                wandb.init(project=self.project, name=self.name, entity=self.entity, config=self.config, reinit=True)
+            self.initialized = True
+
+    def write(self, key_values, key_excluded, step=0):
+        """
+        Write key-values to W&B
+
+        :param key_values: Dictionary of key-values to log
+        :param key_excluded: Dictionary of keys to exclude for certain formats
+        :param step: Global step value
+        """
+        self._init_wandb()
+
+        # Filter out excluded keys
+        log_data = {}
+        for (key, value), (_, excluded) in zip(sorted(key_values.items()), sorted(key_excluded.items())):
+            if excluded is not None and "wandb" in excluded:
+                continue
+
+            # Handle special types
+            # if isinstance(value, (Video, Figure, Image, HParam)):
+            #     # These require special handling in wandb
+            #     if isinstance(value, Video):
+            #         log_data[key] = wandb.Video(value.frames.cpu().numpy(), fps=value.fps)
+            #     elif isinstance(value, Figure):
+            #         log_data[key] = wandb.Image(value.figure)
+            #     elif isinstance(value, Image):
+            #         log_data[key] = wandb.Image(value.image)
+            #     elif isinstance(value, HParam):
+            #         # Log hyperparameters to wandb config
+            #         for param_key, param_value in value.hparam_dict.items():
+            #             wandb.config.update({param_key: param_value}, allow_val_change=True)
+            #         # Log metrics
+            #         for metric_key, metric_value in value.metric_dict.items():
+            #             log_data[f"hparam/{metric_key}"] = metric_value
+            # else:
+            #     # Regular scalar values
+            log_data[key] = value
+
+        # Add global step if available
+        if step > 0:
+            log_data["global_step"] = step
+
+        # Log to wandb
+        if log_data:
+            wandb.log(log_data)
+
+    def close(self):
+        """
+        Close the wandb run
+        """
+        if self.initialized and wandb.run is not None:
+            wandb.finish()
+
+
+class WandBLoggerPCN(Logger):
+    """
+    Logger for Weights & Biases integration with Stable Baselines 3.
+
+    :param folder: Log folder
+    :param output_formats: List of output formats
+    :param project_name: W&B project name
+    :param run_name: W&B run name
+    :param entity_name: W&B entity name
+    :param config: Configuration dictionary for the run
+    """
+
+    def __init__(
+        self,
+        folder=None,
+        output_formats=None,
+        project_name="MORL-Baselines",
+        run_name=None,
+        entity_name=None,
+        config=None,
+    ):
+        if output_formats is None:
+            output_formats = []
+
+        # Add WandB format
+        wandb_format = WandBOutputFormat(project=project_name, name=run_name, entity=entity_name, config=config)
+        output_formats.append(wandb_format)
+
+        super().__init__(folder=folder, output_formats=output_formats)
+
+        # Store wandb-specific info
+        self.project_name = project_name
+        self.run_name = run_name
+        self.entity_name = entity_name
+
+    def dump(self, step=0):
+        """
+        Write all diagnostics from the current iteration to WandB
+
+        :param step: Current global step
+        """
+
+        for _format in self.output_formats:
+            if isinstance(_format, KVWriter):
+                _format.write(self.name_to_value, self.name_to_excluded, step)
+
+        self.name_to_value.clear()
+        self.name_to_count.clear()
+        self.name_to_excluded.clear()
+
+    def get_wandb_run(self):
+        """
+        Get the current wandb run
+
+        :return: The wandb run
+        """
+        return wandb.run
+
+    def get_log_function(self):
+        """
+        Get a function that can be used for logging in other contexts
+
+        :return: A logging function
+        """
+
+        def log_fn(key, value, step=None):
+            self.record(key, value)
+            if step is not None:
+                self.dump(step)
+            else:
+                self.dump()
+
+        return log_fn

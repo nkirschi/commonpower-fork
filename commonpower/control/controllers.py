@@ -3,6 +3,7 @@ Collection of pre-defined controller types.
 """
 from __future__ import annotations
 
+import os
 import warnings
 from collections import OrderedDict
 from copy import copy, deepcopy
@@ -702,6 +703,9 @@ class RLControllerSB3(RLBaseController):
             None
 
         """
+        save_dir = os.path.dirname(save_path)
+        if save_dir and not os.path.exists(save_dir):
+            os.makedirs(save_dir, exist_ok=True)
         # has to be implemented by subclasses
         self.policy = policy
         self.policy.save(save_path)

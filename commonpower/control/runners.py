@@ -29,6 +29,7 @@ from commonpower.control.configs.algorithms import MAPPOBaseConfig, MORL_MetaCon
 from commonpower.control.controllers import OptimalController, RLBaseController
 from commonpower.control.environments import ControlEnv, default_scalarisation_fn
 from commonpower.control.logging_utils.loggers import BaseLogger, TensorboardLogger, WandBLogger
+from commonpower.control.pcn_callback_adapter import PCNCallbackAdapter
 from commonpower.control.util import t2n
 from commonpower.control.wrappers import DeploymentWrapper
 from commonpower.core import System
@@ -493,6 +494,8 @@ class SingleAgentTrainerMORL(BaseTrainer):
             limited_date_range=limited_date_range,
             scalarisation_fn=scalarisation_fn,
         )
+        self.callbacks = []
+
         self.alg_config = alg_config
         self.policy = policy
         if policy is not None and not isinstance(policy, PCN):
@@ -511,15 +514,41 @@ class SingleAgentTrainerMORL(BaseTrainer):
         """
         Runs the single-agent RL training algorithm for a given number of time steps and saves the trained policy.
 
+        Args:
+            n_steps (int): Number of time steps to run for each episode
+            callbacks (list): List of callbacks to use during training
+
         Returns:
             None
-
         """
+        callbacks = [self.logger.log_function()]
+
         self.prepare_run()
         total_timesteps = self.alg_config.total_steps
         ref_point = np.array([-1000.0, -1000.0])  # TODO need informed choice of reference point
 
-        self.policy.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=ref_point)
+        adapter = None
+        # Store original methods to restore later
+        if callbacks:
+            adapter = PCNCallbackAdapter(self.policy, self.logger, callbacks)
+
+            # Replace methods with wrapped versions
+            adapter.init_callbacks()
+
+            adapter.on_training_start()
+
+        try:
+            # Train the policy
+            self.policy.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=ref_point)
+
+            # Call on_training_end for callbacks
+            if adapter:
+                adapter.on_training_end()
+        finally:
+            # Restore original methods if callbacks were used
+            if adapter:
+                adapter.restore_original_methods()
+
         # store reference to model in controller
         for ctrl in self.sys.get_controllers(ctrl_types=[RLBaseController]).values():
             ctrl.save(self.policy, save_path=self.save_path)

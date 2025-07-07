@@ -31,6 +31,7 @@ class SafetyCallback(BaseCallback):
         """
         eps_history = self.training_env.envs[0].get_wrapper_attr("episode_history")
         # ToDo: have to adjust for training with multiple vectorized envs!
+        print(eps_history)
         mean_episode_penalty = safe_mean([ep_info["mean_penalty"] for ep_info in eps_history])
         mean_n_corrections = safe_mean([ep_info["n_corrections"] for ep_info in eps_history])
         mean_episode_rew_without_pen = safe_mean([ep_info["rew_without_penalty"] for ep_info in eps_history])
@@ -68,10 +69,11 @@ class WandBSafetyCallback(WandbCallback):
 
         """
         eps_history = self.training_env.envs[0].get_wrapper_attr("episode_history")
-        # ToDo: have to adjust for training with multiple vectorized envs!
+        # TODO: have to adjust for training with multiple vectorized envs!
         mean_episode_penalty = safe_mean([ep_info["mean_penalty"] for ep_info in eps_history])
         mean_n_corrections = safe_mean([ep_info["n_corrections"] for ep_info in eps_history])
         mean_episode_rew_without_pen = safe_mean([ep_info["rew_without_penalty"] for ep_info in eps_history])
+
         self.logger.record("safety/ep_penalty_mean", mean_episode_penalty)
         self.logger.record("safety/ep_corrections_mean", mean_n_corrections)
         self.logger.record("rollout/ep_rew_without_pen_mean", mean_episode_rew_without_pen)
