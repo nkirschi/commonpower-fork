@@ -22,3 +22,23 @@ class Penalty(CEnum):
     ConstantPenalty = auto()
     DDPenalty = auto()
     BothPenalties = auto()
+
+
+class RLAlgorithm(CEnum):
+    PPO = auto()
+    PCN = auto()
+
+    def is_morl(self):
+        return self in [RLAlgorithm.PCN]
+
+    def to_algorithm_class(self):
+        if self == RLAlgorithm.PCN:
+            from morl_baselines.multi_policy.pcn.pcn import PCN
+
+            return PCN
+        elif self == RLAlgorithm.PPO:
+            from stable_baselines3 import PPO
+
+            return PPO
+        else:
+            raise ValueError(f"Unsupported RL algorithm: {self}")

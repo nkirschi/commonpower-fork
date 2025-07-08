@@ -15,12 +15,12 @@ from commonpower.data_forecasting.forecasters import LookBackForecaster
 from commonpower.modeling.param_initialization import RangeInitializer
 
 from commonpower.control.environments import ControlEnv
-from commonpower.control.runners import SingleAgentTrainer
+from commonpower.control.runners import SingleAgentTrainerSB3
 from commonpower.control.controllers import RLControllerSB3
 from commonpower.control.wrappers import SingleAgentWrapper
 from commonpower.control.safety_layer.safety_layers import ActionProjectionSafetyLayer
 from commonpower.control.safety_layer.penalties import DistanceDependingPenalty
-from commonpower.control.configs.algorithms import SB3MetaConfig, SB3PPOConfig
+from commonpower.control.configs.algorithms import MetaConfig, PPO_Config
 from stable_baselines3 import PPO
 
 
@@ -169,9 +169,9 @@ class TestMORLFunctionality(unittest.TestCase):
         weights = np.array([0.8, 0.2])
         scalarisation_fn = lambda r: np.dot(r, weights)
 
-        alg_config = SB3MetaConfig(total_steps=2, seed=42, algorithm=PPO, algorithm_config=SB3PPOConfig(n_steps=2))
+        alg_config = MetaConfig(total_steps=2, seed=42, algorithm=PPO, algorithm_config=PPO_Config(n_steps=2))
 
-        trainer = SingleAgentTrainer(
+        trainer = SingleAgentTrainerSB3(
             sys=self.sys,
             alg_config=alg_config,
             wrapper=SingleAgentWrapper,

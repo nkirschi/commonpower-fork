@@ -25,7 +25,7 @@ from stable_baselines3.common.base_class import BasePolicy
 from stable_baselines3.common.utils import safe_mean
 from tqdm import tqdm
 
-from commonpower.control.configs.algorithms import MAPPOBaseConfig, MORL_MetaConfig, SB3MetaConfig
+from commonpower.control.configs.algorithms import MAPPOBaseConfig, MetaConfig
 from commonpower.control.controllers import OptimalController, RLBaseController
 from commonpower.control.environments import ControlEnv, default_scalarisation_fn
 from commonpower.control.logging_utils.loggers import BaseLogger, TensorboardLogger, WandBLogger
@@ -292,11 +292,11 @@ class BaseTrainer(BaseRunner):
             )
 
 
-class SingleAgentTrainer(BaseTrainer):
+class SingleAgentTrainerSB3(BaseTrainer):
     def __init__(
         self,
         sys: System,
-        alg_config: SB3MetaConfig,
+        alg_config: MetaConfig,
         global_controller: OptimalController = OptimalController("global"),
         policy: BasePolicy = None,
         wrapper: gym.Wrapper = None,
@@ -428,7 +428,7 @@ class SingleAgentTrainerMORL(BaseTrainer):
     def __init__(
         self,
         sys: System,
-        alg_config: MORL_MetaConfig,
+        alg_config: MetaConfig,
         ref_point: np.ndarray,
         global_controller: OptimalController = OptimalController("global"),
         policy: MOAgent = None,
@@ -595,7 +595,7 @@ class DeploymentRunner(BaseRunner):
         self,
         sys: System,
         global_controller: OptimalController = None,
-        alg_config: Union[SB3MetaConfig, MAPPOBaseConfig] = None,
+        alg_config: Union[MetaConfig, MAPPOBaseConfig] = None,
         wrapper: gym.Wrapper = None,
         horizon: timedelta = timedelta(hours=24),
         dt: timedelta = timedelta(minutes=60),

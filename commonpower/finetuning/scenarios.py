@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
-from utils import Approach, CEnum, Penalty, Stage
+from utils import Approach, CEnum, Penalty, RLAlgorithm, Stage
 
 from commonpower.control.controllers import *
 from commonpower.control.runners import DeploymentRunner
@@ -41,12 +41,12 @@ class BaseScenario(metaclass=ABCMeta):
 
 def create_scenario(
     stage: Stage,
+    scenario_constructor: BaseScenario,
     approach: Approach,
     penalty: Penalty,
-    scenario_constructor: BaseScenario,
+    rl_algorithm: RLAlgorithm,
     forecast_length: int,
     forecaster: Forecaster,
-    use_morl: bool = False,
 ):
     forecast_horizon = timedelta(hours=forecast_length)
     current_path = Path().absolute()
@@ -94,7 +94,7 @@ def create_scenario(
     if approach is Approach.OptimalController:
         controller = OptimalController(name="agent1")
     else:
-        if use_morl:
+        if rl_algorithm.is_morl():
             controller = RLControllerMORL(
                 name="agent1", safety_layer=safeguard, obs_handler=ObservationHandler(num_forecasts=forecast_length)
             )

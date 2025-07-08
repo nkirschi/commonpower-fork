@@ -12,7 +12,7 @@ from commonpower.models.powerflow import *
 from commonpower.control.observation_handling import ObservationHandler
 from commonpower.control.controllers import RLControllerSB3
 from commonpower.control.safety_layer.safety_layers import ActionProjectionSafetyLayer
-from commonpower.control.runners import SingleAgentTrainer, DeploymentRunner
+from commonpower.control.runners import SingleAgentTrainerSB3, DeploymentRunner
 from commonpower.control.wrappers import SingleAgentWrapper
 from stable_baselines3 import PPO
 from commonpower.data_forecasting.forecasters import *
@@ -104,7 +104,7 @@ class TestControl(unittest.TestCase):
         )
 
         # set up configuration for the PPO algorithm
-        alg_config = SB3MetaConfig(total_steps=1, seed=1, algorithm=PPO, algorithm_config=SB3PPOConfig())
+        alg_config = MetaConfig(total_steps=1, seed=1, algorithm=PPO, algorithm_config=PPO_Config())
 
         # set up logger
         log_dir = "./tests/artifacts/test_run/"
@@ -114,7 +114,7 @@ class TestControl(unittest.TestCase):
         model_path = "./tests/artifacts/saved_models/my_model"
         train_seed = 1
 
-        runner = SingleAgentTrainer(
+        runner = SingleAgentTrainerSB3(
             sys=sys,
             global_controller=agent1,
             wrapper=SingleAgentWrapper,

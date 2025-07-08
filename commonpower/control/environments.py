@@ -368,7 +368,7 @@ class MORLEnv(gym.Env):
                     fixed_start=fixed_start,
                     normalize_action_space=normalize_action_space,
                     history=history,
-                    scalarisation_fn=None,  # Handle scalarization yourself
+                    scalarisation_fn=scalarisation_fn,
                 )
             )
 
@@ -378,7 +378,7 @@ class MORLEnv(gym.Env):
         self.envs[0].episode_history = deque(maxlen=100)
         # Make sure there's only one agent
         if len(self.envs[0].unwrapped.controllers) > 1:
-            raise ValueError("MyMORLEnvironment cannot handle more than 1 agent")
+            raise ValueError("MORLEnv cannot handle more than 1 agent")
 
         self.ctrl_id = list(self.envs[0].unwrapped.controllers.keys())[0]
 
@@ -387,16 +387,12 @@ class MORLEnv(gym.Env):
         self.custom_scalarisation_fn = scalarisation_fn
 
         # Define reward space for MORL algorithms
-        self.reward_space = gym.spaces.Box(
-            low=np.array([-float('inf')] * reward_dim), high=np.array([float('inf')] * reward_dim), dtype=np.float32
-        )
-
+        self.reward_space = gym.spaces.Box(low=-np.inf, high=0.0, shape=(2,), dtype=np.float64)
         self.observation_space = self.envs[0].observation_space
-
         self.action_space = self.envs[0].action_space
 
         self.spec = EnvSpec(
-            id="MyMORLEnvironment-v0",
+            id="MORLEnv-v0",
             entry_point=None,
             max_episode_steps=episode_length,
         )

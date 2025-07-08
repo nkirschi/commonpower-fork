@@ -49,7 +49,7 @@ def run_deployment(
     n_eval_steps: int,
     eval_seed: int,
 ):
-    alg_config = SB3MetaConfig(
+    alg_config = MetaConfig(
         total_steps=1,
         seed=train_seed,
         algorithm=PPO,
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         horizon = getattr(deployment_runner, "horizon")
 
         # set up configuration for the PPO algorithm
-        ppo_config = SB3PPOConfig(
+        ppo_config = PPO_Config(
             device="cpu",
             n_steps=96,
             batch_size=24,

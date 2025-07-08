@@ -3,15 +3,15 @@ from abc import ABCMeta
 from pydantic import BaseModel, ConfigDict
 
 
-class SB3AlgorithmBaseConfig(BaseModel):
-    policy: str = 'MlpPolicy'
+class AlgorithmBaseConfig(BaseModel):
     device: str = 'cpu'
     batch_size: int = 12  # since as default we use small amount of data per update, we also use a smaller batch size
     learning_rate: float = 0.0003
 
 
-class SB3PPOConfig(SB3AlgorithmBaseConfig):
+class PPO_Config(AlgorithmBaseConfig):
     n_steps: int = 24  # corresponds to 24 time steps, so 1 day if tau=1h
+    policy: str = 'MlpPolicy'
     policy_kwargs: dict = dict(net_arch=dict(pi=[64, 64], vf=[64, 64]), log_std_init=0, squash_output=False)
     use_sde: bool = False  # SB3 PPO default
     sde_sample_freq: int = -1  # SB3 PPO default
@@ -26,8 +26,9 @@ class SB3PPOConfig(SB3AlgorithmBaseConfig):
     normalize_advantage: bool = True  # SB3 PPO default
 
 
-class SB3SACConfig(SB3AlgorithmBaseConfig):
+class SAC_Config(AlgorithmBaseConfig):
     train_freq: int = 24  # same as "n_steps" in PPO
+    policy: str = 'MlpPolicy'
     policy_kwargs: dict = dict(net_arch=dict(pi=[64, 64], qf=[64, 64]))
     buffer_size: int = 1000000  # SB3 SAC default
     learning_starts: int = 100  # SB3 SAC default
@@ -40,23 +41,7 @@ class SB3SACConfig(SB3AlgorithmBaseConfig):
     sde_sample_freq: int = -1  # SB3 SAC default
 
 
-class SB3MetaConfig(BaseModel):
-    total_steps: int
-    algorithm: ABCMeta
-    seed: int
-    algorithm_config: SB3AlgorithmBaseConfig
-    penalty_factor: float = 0.0
-    # necessary for ABCMeta type
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-class MORL_AlgorithmBaseConfig(BaseModel):
-    device: str = 'cpu'
-    batch_size: int = 12  # since as default we use small amount of data per update, we also use a smaller batch size
-    learning_rate: float = 0.0003
-
-
-class MORL_PCNConfig(MORL_AlgorithmBaseConfig):
+class PCN_Config(AlgorithmBaseConfig):
     n_steps: int = 24  # corresponds to 24 time steps, so 1 day if tau=1h
     gamma: float = 1.0  # MORL-Baselines PCN default
     hidden_dim: int = 64  # MORL-Baselines PCN default
@@ -65,11 +50,11 @@ class MORL_PCNConfig(MORL_AlgorithmBaseConfig):
     learning_rate: float = 0.001  # MORL-Baselines PCN default
 
 
-class MORL_MetaConfig(BaseModel):
+class MetaConfig(BaseModel):
     total_steps: int
     algorithm: ABCMeta
     seed: int
-    algorithm_config: MORL_AlgorithmBaseConfig
+    algorithm_config: AlgorithmBaseConfig
     penalty_factor: float = 0.0
     # necessary for ABCMeta type
     model_config = ConfigDict(arbitrary_types_allowed=True)
