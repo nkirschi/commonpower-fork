@@ -761,6 +761,81 @@ class RLControllerSB3(RLBaseController):
         return action
 
 
+class RLControllerMORL(RLBaseController):
+    """
+    Controller class for RL agents trained with algorithms from the MORL Baselines repository
+    (https://lucasalegre.github.io/morl-baselines/). Single-agent RL algorithms only!
+
+    """
+
+    def save(self, policy: BasePolicy, save_path: str = "./saved_models/test_model"):
+        """
+        Save neural network policy parameters and structure.
+
+        Args:
+            policy (BasePolicy): policy trained with algorithm from MORL Baselines
+            save_path (str): where to save the policy parameters
+
+        Returns:
+            None
+
+        """
+        save_dir = os.path.dirname(save_path)
+        if save_dir and not os.path.exists(save_dir):
+            os.makedirs(save_dir, exist_ok=True)
+        # has to be implemented by subclasses
+        self.policy = policy
+        self.policy.save(savedir=save_dir)
+
+    def load(self, env, config: dict, policy_kwargs: dict = None):
+        """
+        Loading a pre-trained policy from a directory.
+
+        Args:
+            env (ControlEnv): The gym environment constructed from the power system the RL algorithm interacts with. \
+            Required to construct the neural network policy because it determines the number of inputs (observations) \
+            and outputs (actions) of the network.
+            config (dict): Configuration for the MORL Baselines algorithm (also constructs training buffers etc., \
+            which is why this also contains algorithm parameters).
+            policy_kwargs (dict): Configuration of the actual neural networks of the policy (e.g., number of neurons \
+            in the hidden layers of the actor and critic network of an ActorCriticPolicy). Depends on policy type. \
+            Consult the MORL Baslines documentation (https://lucasalegre.github.io/morl-baselines/) for more \
+            information.
+
+        Returns:
+            None
+
+        """
+        # check that a path from which to load the policy has been instantiated
+        if not self.load_path:
+            raise ValueError(
+                "No load path for pre-trained policy! Needs to be handed over in constructor (pretrained_policy_path)"
+            )
+        # has to be implemented by subclasses
+        TrainAlg = config.algorithm
+        self.policy = TrainAlg(
+            env=env, seed=config.seed, **config.algorithm_config.model_dump()  # pydantic Model to dictionary
+        )
+        self.policy = self.policy.load(self.load_path)
+
+    def predict_action(self, obs: np.ndarray, deterministic: bool = True) -> np.ndarray:
+        """
+        Compute the control action based on a given observation by propagating this observation through the policy
+        network.
+
+        Args:
+            obs (np.ndarray): observation at current time step (has to be numpy array, not dictionary, since a \
+            dictionary cannot be processed by the neural network.)
+            deterministic (bool): Whether to use a deterministic action selection algorithm
+
+        Returns:
+            np.ndarray: control action
+        """
+        # actual forward pass of the current policy
+        action, _ = self.policy.predict(obs, deterministic=deterministic)
+        return action
+
+
 class RLControllerMA(RLBaseController):
     """
     Controller class for RL agents trained with MAPPO algorithm from on-policy repository

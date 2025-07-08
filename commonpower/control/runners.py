@@ -528,27 +528,14 @@ class SingleAgentTrainerMORL(BaseTrainer):
         self.prepare_run()
         total_timesteps = self.alg_config.total_steps
 
-        adapter = None
-        # Store original methods to restore later
-        if callbacks:
-            adapter = PCNCallbackAdapter(self.policy, self.logger, callbacks)
+        adapter = PCNCallbackAdapter(self.policy, self.logger, callbacks)
 
-            # Replace methods with wrapped versions
-            adapter.init_callbacks()
-
-            adapter.on_training_start()
-
-        try:
-            # Train the policy
-            self.policy.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=self.ref_point)
-
-            # Call on_training_end for callbacks
-            if adapter:
-                adapter.on_training_end()
-        finally:
-            # Restore original methods if callbacks were used
-            if adapter:
-                adapter.restore_original_methods()
+        # Replace methods with wrapped versions
+        adapter.init_callbacks()
+        adapter.on_training_start()
+        adapter.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=self.ref_point)
+        adapter.on_training_end()
+        adapter.restore_original_methods()
 
         # store reference to model in controller
         for ctrl in self.sys.get_controllers(ctrl_types=[RLBaseController]).values():

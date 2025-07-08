@@ -61,6 +61,8 @@ class MORL_PCNConfig(MORL_AlgorithmBaseConfig):
     gamma: float = 1.0  # MORL-Baselines PCN default
     hidden_dim: int = 64  # MORL-Baselines PCN default
     scaling_factor: float = 1.0  # we do not scale by default
+    batch_size: int = 256  # MORL-Baselines PCN default
+    learning_rate: float = 0.001  # MORL-Baselines PCN default
 
 
 class MORL_MetaConfig(BaseModel):

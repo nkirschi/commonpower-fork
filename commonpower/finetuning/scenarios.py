@@ -46,6 +46,7 @@ def create_scenario(
     scenario_constructor: BaseScenario,
     forecast_length: int,
     forecaster: Forecaster,
+    use_morl: bool = False,
 ):
     forecast_horizon = timedelta(hours=forecast_length)
     current_path = Path().absolute()
@@ -93,11 +94,16 @@ def create_scenario(
     if approach is Approach.OptimalController:
         controller = OptimalController(name="agent1")
     else:
-        controller = RLControllerSB3(
-            name="agent1",
-            safety_layer=safeguard,
-            obs_handler=ObservationHandler(num_forecasts=forecast_length),
-        )
+        if use_morl:
+            controller = RLControllerMORL(
+                name="agent1", safety_layer=safeguard, obs_handler=ObservationHandler(num_forecasts=forecast_length)
+            )
+        else:
+            controller = RLControllerSB3(
+                name="agent1",
+                safety_layer=safeguard,
+                obs_handler=ObservationHandler(num_forecasts=forecast_length),
+            )
     controller.add_entity(sys.nodes[0])
 
     # Create deployment runner

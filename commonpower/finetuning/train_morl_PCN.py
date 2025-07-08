@@ -10,17 +10,17 @@ from commonpower.control.wrappers import *
 
 
 def run_experiment(
-    save_path: str,
+    run_id: str,
     algo_config: MORL_AlgorithmBaseConfig,
     forecast_horizon: timedelta,
     episode_length: int,
     train_sys: System,
     scalarisation_fn: callable,
     scenario_constructor: Scenario,
-    seed: int = 1,
-    n_eps: int = 900,
-    fixed_start: str = None,
-    limited_date_range: List[datetime] = None,
+    seed: int,
+    n_eps: int,
+    fixed_start: str,
+    limited_date_range: List[datetime],
 ):
     train_config = MORL_MetaConfig(
         total_steps=n_eps * algo_config.n_steps,
@@ -30,16 +30,16 @@ def run_experiment(
     )
 
     # set up logger
-    tb_log_dir = os.getcwd() + f'/tensorboard/{save_path}/{seed}'
+    tb_log_dir = os.getcwd() + f'/tensorboard/{run_id}/{seed}'
     logger = WandBLogger(
         log_dir=tb_log_dir,
         entity_name="sgmorl",
         project_name="sgmorl",
-        run_name=f"{save_path}_{seed}",
+        run_name=f"{run_id}_{seed}",
     )
 
     # specify the path where the model should be saved
-    model_dir = os.getcwd() + f'/models/{save_path}/{seed}'
+    model_dir = os.getcwd() + f'/models/{run_id}/{seed}'
 
     if not os.path.exists(model_dir):
         os.makedirs(model_dir, exist_ok=True)
@@ -96,10 +96,11 @@ if __name__ == "__main__":
             scenario_constructor=scenario_constructor.value,
             forecast_length=forecast_length,
             forecaster=forecaster,
+            use_morl=True,
         )
 
-        # Updated save path to with MORL experiment. Naming convention from original code
-        save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/MORL_PCN'
+        # ID for this training run. Naming convention from original code
+        run_id = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/MORL_PCN'
 
         date_format = "%Y-%m-%d %H:%M:00"
         start = datetime.strptime("2016-07-01 00:00:00", date_format)
@@ -115,7 +116,7 @@ if __name__ == "__main__":
         )
 
         run_experiment(
-            save_path=save_path,
+            run_id=run_id,
             algo_config=pcn_config,
             seed=seed,
             n_eps=n_eps,

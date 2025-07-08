@@ -15,10 +15,10 @@ def run_experiment(
     forecast_horizon: timedelta,
     episode_length: int,
     train_sys: System,
-    seed: int = 1,
-    n_eps: int = 900,
-    fixed_start: str = None,
-    limited_date_range: List[datetime] = None,
+    seed: int,
+    n_eps: int,
+    fixed_start: str,
+    limited_date_range: List[datetime],
 ):
     train_config = SB3MetaConfig(
         total_steps=n_eps * sb3_config.n_steps,
