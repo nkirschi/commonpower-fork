@@ -697,6 +697,11 @@ class DeploymentRunner(BaseRunner):
         # ToDo: more elegant way to solve this?
         if self.start_time is not None:
             self.fixed_start = self.start_time
+
+        # ToDo: more elegant way to solve this?
+        # Directly check if the algorithm is the PCN class.
+        is_morl = self.alg_config.algorithm is PCN
+
         # We have to wrap the environment with a DeploymentWrapper to ensure compatibility
         self.env = DeploymentWrapper(
             self.sys.create_env_func(
@@ -704,6 +709,7 @@ class DeploymentRunner(BaseRunner):
                 fixed_start=self.fixed_start,
                 normalize_actions=self.normalize_actions,
                 history=self.history,
+                morl=is_morl,
             )
         )
         # set train flag of environment to False

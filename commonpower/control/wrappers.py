@@ -1,6 +1,7 @@
 """
 Wrappers to adjust API in environments.py to different RL training algorithms.
 """
+
 from collections import OrderedDict, deque
 from functools import partial
 from typing import List, Optional, Tuple, Union
@@ -250,6 +251,14 @@ class SingleAgentWrapper(gym.Wrapper):
         for el_id, el_obs in recursive_items(ctrl_obs):
             new_obs = np.concatenate((new_obs, el_obs))
         return new_obs
+
+    # Allows the runner to set the mode 'train' or 'deploy'
+    # on the environment by passing the call through the wrapper
+    def set_mode(self, mode: str):
+        """
+        Sets the operational mode of the underlying environment.
+        """
+        return self.env.set_mode(mode)
 
 
 class RecordTransitionsWrapper(gym.Wrapper):

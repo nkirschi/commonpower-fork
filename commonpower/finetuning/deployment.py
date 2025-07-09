@@ -1,7 +1,6 @@
 import os
 
 from scenarios import *
-from stable_baselines3 import PPO
 from utils import *
 
 from commonpower.control.configs.algorithms import *
@@ -43,7 +42,8 @@ def run_deployment(
     train_seed: int,
     horizon: timedelta,
     approach: Approach,
-    ppo_config: SB3AlgorithmBaseConfig,
+    rl_algorithm: RLAlgorithm,
+    algo_config: AlgorithmBaseConfig,
     save_path: str,
     eval_periods: List[str],
     n_eval_steps: int,
@@ -52,10 +52,11 @@ def run_deployment(
     alg_config = MetaConfig(
         total_steps=1,
         seed=train_seed,
-        algorithm=PPO,
-        algorithm_config=ppo_config,
+        algorithm=rl_algorithm.to_algorithm_class(),
+        algorithm_config=algo_config,
     )
-    model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}'
+    # model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}'
+    model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}/PCN_model.pt'
     # specify path for results
     results_dir = os.getcwd() + f'/results/{save_path}/{train_seed}'
     os.makedirs(results_dir, exist_ok=True)
@@ -72,6 +73,14 @@ def run_deployment(
         system_nodes = getattr(scenario, "nodes")
         rl_controller = getattr(system_nodes[0], "controller")
         setattr(rl_controller, "load_path", model_dir)
+
+        if rl_algorithm == RLAlgorithm.PCN:
+            # for now we just use the mean return from the last step in the training...
+            # step 74400 	 return [-33.08533    -0.6472926], ([0. 0.]) 	 loss 7.450E-02 	 horizons 744.0
+            # for the future we might use values from eval/front table...
+            # or choose a point that is slightly better than the achieved front
+            rl_controller.desired_return = np.array([-33.08533, -0.6472926])
+            rl_controller.desired_horizon = 364 * 24  # one year ( same as n_eval_steps )
 
     for i, eval_period in enumerate(eval_periods):
         history = ModelHistory([scenario])
@@ -107,6 +116,7 @@ if __name__ == "__main__":
     approach = Approach.WithProjectionSafeguard  # Approach.OptimalController
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
+    rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PPO
     save_path = f'{scenario_constructor}/{approach}/{penalty}'
     # Set the evaluation time frame - one year starting on January 1st
     # (quite time intensive, could also change to evaluating over multiple weeks during the year but less accurate)
@@ -126,13 +136,14 @@ if __name__ == "__main__":
         seeds = [1]
     else:
         # seeds = [1, 2, 3, 4, 5]
-        seeds = [42]
+        seeds = [1]
 
     for seed in seeds:
         scenario, deployment_runner = create_scenario(
             stage=stage,
             approach=approach,
             penalty=penalty,
+            rl_algorithm=rl_algorithm,
             scenario_constructor=scenario_constructor.value,
             forecast_length=forecast_length,
             forecaster=forecaster,
@@ -141,21 +152,32 @@ if __name__ == "__main__":
         # extract relevant parameters
         horizon = getattr(deployment_runner, "horizon")
 
-        # set up configuration for the PPO algorithm
-        ppo_config = PPO_Config(
-            device="cpu",
-            n_steps=96,
-            batch_size=24,
-            learning_rate=0.0008,
-            n_epochs=5,
-            policy_kwargs=dict(log_std_init=-2),
-        )  # otherwise default hyperparameters for PPO
+        # set up configuration for the PCN/PPO algorithm
+        if rl_algorithm == RLAlgorithm.PCN:
+            algo_config = PCN_Config(
+                device='auto',
+                n_steps=n_eval_steps,
+                batch_size=24,
+            )
+        elif rl_algorithm == RLAlgorithm.PPO:
+            algo_config = PPO_Config(
+                device="cpu",
+                n_steps=96,
+                batch_size=24,
+                learning_rate=0.0008,
+                n_epochs=5,
+                policy_kwargs=dict(log_std_init=-2),
+            )
+        else:
+            raise NotImplementedError(f"Configuration for {rl_algorithm} is not defined.")
+
         run_deployment(
             scenario=scenario,
             train_seed=seed,
             horizon=horizon,
             approach=approach,
-            ppo_config=ppo_config,
+            rl_algorithm=rl_algorithm,
+            algo_config=algo_config,
             save_path=save_path,
             eval_periods=eval_periods,
             n_eval_steps=n_eval_steps,

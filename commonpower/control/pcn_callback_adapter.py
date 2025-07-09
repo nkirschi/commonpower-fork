@@ -96,15 +96,14 @@ class PCNAdapter:
         """Save the PCN agent state."""
         torch.save(self.pcn_agent.model, path)
 
-    def load(self, path):
-        """Load the PCN agent state."""
-        self.pcn_agent.model = torch.load(path)
+    def load(self, path: str):
+        """Load the PCN agent's model from the specific model file."""
+        self.pcn_agent.model = torch.load(path, map_location=torch.device('cpu'), weights_only=False)
 
-    def predict(self, obs, deterministic=True):
+    def predict(self, obs):
         """
         Predict action based on observation.
         :param obs: Observation input.
-        :param deterministic: Whether to use deterministic policy.
         :return: Predicted action.
         """
-        return self.pcn_agent.eval(obs, deterministic=deterministic), None
+        return self.pcn_agent.eval(obs), None

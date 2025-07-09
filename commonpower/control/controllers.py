@@ -1,6 +1,7 @@
 """
 Collection of pre-defined controller types.
 """
+
 from __future__ import annotations
 
 import os
@@ -815,14 +816,30 @@ class RLControllerMORL(RLBaseController):
             )
         # has to be implemented by subclasses
         TrainAlg = config.algorithm
-        self.policy = TrainAlg(
-            env=env, seed=config.seed, **config.algorithm_config.model_dump()  # pydantic Model to dictionary
-        )
+
+        # n_steps is not a valid argument for morl-baselines
+        algo_kwargs = config.algorithm_config.model_dump()
         if TrainAlg is PCN:
-            self.policy = PCNAdapter(self.policy)
+            if 'n_steps' in algo_kwargs:
+                del algo_kwargs['n_steps']
+            algo_kwargs['log'] = False  # Deactivate wandb logging for deployment
+
+        agent = TrainAlg(env=env, seed=config.seed, **algo_kwargs)
+
+        if TrainAlg is PCN:
+            self.policy = PCNAdapter(agent)
+
+            # If desired return/horizon are set on controller -> pass them to the agent (best practice see docu)
+            if hasattr(self, 'desired_return') and hasattr(self, 'desired_horizon'):
+                self.policy.pcn_agent.set_desired_return_and_horizon(self.desired_return, self.desired_horizon)
+            else:
+                warnings.warn(
+                    "PCN deployment: desired_return and desired_horizon not set on the controller. The agent may fail."
+                )
+
             self.policy.load(self.load_path)
         else:
-            self.policy = self.policy.load(self.load_path)
+            self.policy = agent.load(self.load_path)
 
     def predict_action(self, obs: np.ndarray, deterministic: bool = True) -> np.ndarray:
         """
