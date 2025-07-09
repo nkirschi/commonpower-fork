@@ -107,4 +107,4 @@ class PCNAdapter:
         :param deterministic: Whether to use deterministic policy.
         :return: Predicted action.
         """
-        return self.pcn_agent.eval(obs, deterministic=deterministic)
+        return self.pcn_agent.eval(obs, deterministic=deterministic), None
