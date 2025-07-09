@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-from morl_baselines.multi_policy.pcn.pcn import PCN
 
 from commonpower.control.logging_utils.loggers import WandBLoggerPCN
 
@@ -100,7 +98,6 @@ class PCNAdapter:
 
     def load(self, path):
         """Load the PCN agent state."""
-        self.pcn_agent.model = PCN(None, np.array([]))
         self.pcn_agent.model = torch.load(path)
 
     def predict(self, obs, deterministic=True):
