@@ -3,7 +3,7 @@ import torch
 from commonpower.control.logging_utils.loggers import WandBLoggerPCN
 
 
-class PCNCallbackAdapter:
+class PCNAdapter:
     """
     Adapter that makes PCN compatible with SB3 callbacks and wraps PCN methods
     to inject callback calls at appropriate points.

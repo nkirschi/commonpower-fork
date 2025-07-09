@@ -29,7 +29,7 @@ from commonpower.control.configs.algorithms import MAPPOBaseConfig, MetaConfig
 from commonpower.control.controllers import OptimalController, RLBaseController
 from commonpower.control.environments import ControlEnv, default_scalarisation_fn
 from commonpower.control.logging_utils.loggers import BaseLogger, TensorboardLogger, WandBLogger
-from commonpower.control.pcn_callback_adapter import PCNCallbackAdapter
+from commonpower.control.pcn_callback_adapter import PCNAdapter
 from commonpower.control.util import t2n
 from commonpower.control.wrappers import DeploymentWrapper
 from commonpower.core import System
@@ -528,7 +528,7 @@ class SingleAgentTrainerMORL(BaseTrainer):
         self.prepare_run()
         self.alg_config.total_steps
 
-        adapter = PCNCallbackAdapter(self.policy, callbacks)
+        adapter = PCNAdapter(self.policy, callbacks)
 
         # Replace methods with wrapped versions
         adapter.init_callbacks()
