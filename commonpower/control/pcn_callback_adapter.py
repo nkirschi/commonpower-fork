@@ -1,4 +1,6 @@
+import numpy as np
 import torch
+from morl_baselines.multi_policy.pcn.pcn import PCN
 
 from commonpower.control.logging_utils.loggers import WandBLoggerPCN
 
@@ -9,7 +11,7 @@ class PCNAdapter:
     to inject callback calls at appropriate points.
     """
 
-    def __init__(self, pcn_agent, callbacks=None):
+    def __init__(self, pcn_agent=None, callbacks=None):
         self.pcn_agent = pcn_agent
         self.callbacks = callbacks or []
 
@@ -18,11 +20,15 @@ class PCNAdapter:
         self.logger = WandBLoggerPCN()
 
         # Store original methods
-        self._original_run_episode = pcn_agent._run_episode
-        self._original_update = pcn_agent.update
+        if pcn_agent is None:
+            self._original_run_episode = None
+            self._original_update = None
+        else:
+            self._original_run_episode = pcn_agent._run_episode
+            self._original_update = pcn_agent.update
 
-        # Apply wrappers
-        self._wrap_methods()
+            # Apply wrappers
+            self._wrap_methods()
 
     def get_env(self):
         """Return the training environment."""
@@ -79,6 +85,8 @@ class PCNAdapter:
             callback.on_training_start({}, {})
 
     def train(self, total_timesteps, eval_env, ref_point):
+        if not self.pcn_agent:
+            raise ValueError("PCN agent is not initialized.")
         self.pcn_agent.train(total_timesteps=total_timesteps, eval_env=eval_env, ref_point=ref_point)
 
     def on_training_end(self):
@@ -92,4 +100,14 @@ class PCNAdapter:
 
     def load(self, path):
         """Load the PCN agent state."""
+        self.pcn_agent.model = PCN(None, np.array([]))
         self.pcn_agent.model = torch.load(path)
+
+    def predict(self, obs, deterministic=True):
+        """
+        Predict action based on observation.
+        :param obs: Observation input.
+        :param deterministic: Whether to use deterministic policy.
+        :return: Predicted action.
+        """
+        return self.pcn_agent.eval(obs, deterministic=deterministic)

@@ -13,6 +13,7 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 import torch as th
+from morl_baselines.multi_policy.pcn.pcn import PCN
 from pyomo.core import ConcreteModel, Objective, quicksum
 from pyomo.opt import TerminationCondition
 from pyomo.opt.solver import OptSolver
@@ -20,6 +21,7 @@ from stable_baselines3.common.base_class import BasePolicy
 from stable_baselines3.common.utils import set_random_seed
 
 from commonpower.control.observation_handling import ObservationHandler
+from commonpower.control.pcn_callback_adapter import PCNAdapter
 from commonpower.control.util import clone_from_top_level_nodes, single_step_cost_callback
 from commonpower.core import System
 from commonpower.modeling.base import ControllableModelEntity
@@ -816,7 +818,11 @@ class RLControllerMORL(RLBaseController):
         self.policy = TrainAlg(
             env=env, seed=config.seed, **config.algorithm_config.model_dump()  # pydantic Model to dictionary
         )
-        self.policy = self.policy.load(self.load_path)
+        if TrainAlg is PCN:
+            self.policy = PCNAdapter(self.policy)
+            self.policy.load(self.load_path)
+        else:
+            self.policy = self.policy.load(self.load_path)
 
     def predict_action(self, obs: np.ndarray, deterministic: bool = True) -> np.ndarray:
         """
