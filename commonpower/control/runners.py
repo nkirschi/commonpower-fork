@@ -524,16 +524,16 @@ class SingleAgentTrainerMORL(BaseTrainer):
             None
         """
         callbacks = [self.logger.log_function()]
-
+        print("prep run")
         self.prepare_run()
-        total_timesteps = self.alg_config.total_steps
+        self.alg_config.total_steps
 
-        adapter = PCNCallbackAdapter(self.policy, self.logger, callbacks)
+        adapter = PCNCallbackAdapter(self.policy, callbacks)
 
         # Replace methods with wrapped versions
         adapter.init_callbacks()
         adapter.on_training_start()
-        adapter.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=self.ref_point)
+        # adapter.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=self.ref_point)
         adapter.on_training_end()
         adapter.restore_original_methods()
 

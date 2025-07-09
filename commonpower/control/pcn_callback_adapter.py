@@ -1,3 +1,5 @@
+import torch
+
 from commonpower.control.logging_utils.loggers import WandBLoggerPCN
 
 
@@ -7,7 +9,7 @@ class PCNCallbackAdapter:
     to inject callback calls at appropriate points.
     """
 
-    def __init__(self, pcn_agent, logger, callbacks=None):
+    def __init__(self, pcn_agent, callbacks=None):
         self.pcn_agent = pcn_agent
         self.callbacks = callbacks or []
 
@@ -86,4 +88,8 @@ class PCNCallbackAdapter:
 
     def save(self, path):
         """Save the PCN agent state."""
-        self.pcn_agent.save(savedir=path)
+        torch.save(self.pcn_agent.model, path)
+
+    def load(self, path):
+        """Load the PCN agent state."""
+        self.pcn_agent.model = torch.load(path)
