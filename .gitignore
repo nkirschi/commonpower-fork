@@ -5,7 +5,6 @@ runs/
 wandb/
 docs/source/tutorials/saved_models/
 *.ipynb_checkpoints/
-*.zip
 *build
 _*
 !__init__.py
