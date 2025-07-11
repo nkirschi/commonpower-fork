@@ -20,6 +20,8 @@ class PCNPolicy(BasePolicy):
 
         self.__dict__.update(library_specific_kwargs)
 
+        self.logger = WandBLoggerPCN()
+
         constructor_keys = [
             'scaling_factor',
             'learning_rate',
