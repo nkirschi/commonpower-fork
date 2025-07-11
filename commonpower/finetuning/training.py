@@ -5,7 +5,7 @@ from scenarios import *
 
 from commonpower.control.configs.algorithms import AlgorithmBaseConfig, MetaConfig, PCN_Config, PPO_Config
 from commonpower.control.logging_utils.loggers import *
-from commonpower.control.runners import SingleAgentTrainerMORL, SingleAgentTrainerSB3
+from commonpower.control.runners import SingleAgentTrainer
 from commonpower.control.wrappers import *
 from commonpower.finetuning.utils import RLAlgorithm
 
@@ -16,13 +16,13 @@ def run_experiment(
     forecast_horizon: timedelta,
     episode_length: int,
     train_sys: System,
-    scalarisation_fn: callable,
-    scenario_constructor: Scenario,
     rl_algorithm: RLAlgorithm,
     seed: int,
     n_episodes: int,
     fixed_start: str,
     limited_date_range: List[datetime],
+    scalarisation_fn: Optional[callable],
+    ref_point: np.ndarray | None,
 ):
     if rl_algorithm == RLAlgorithm.PCN:
         total_steps = n_episodes * algo_config.num_step_episodes
@@ -53,36 +53,20 @@ def run_experiment(
 
     wrappers = WrapperStack().add(SingleAgentWrapper)
 
-    ref_point = calculate_ref_point(scenario_constructor)
-
     # start training
-    if rl_algorithm.is_morl():
-        runner = SingleAgentTrainerMORL(
-            sys=train_sys,
-            wrapper=wrappers.get_stack(),
-            alg_config=train_config,
-            ref_point=ref_point,
-            horizon=forecast_horizon,
-            episode_length=episode_length,
-            logger=logger,
-            save_path=model_dir,
-            seed=seed,
-            limited_date_range=limited_date_range,
-            scalarisation_fn=scalarisation_fn,
-        )
-    elif rl_algorithm == RLAlgorithm.PPO:
-        runner = SingleAgentTrainerSB3(
-            sys=train_sys,
-            wrapper=wrappers.get_stack(),
-            alg_config=train_config,
-            horizon=forecast_horizon,
-            episode_length=episode_length,
-            logger=logger,
-            save_path=model_dir,
-            seed=seed,
-            limited_date_range=limited_date_range,
-        )
-
+    runner = SingleAgentTrainer(
+        sys=train_sys,
+        wrapper=wrappers.get_stack(),
+        alg_config=train_config,
+        horizon=forecast_horizon,
+        episode_length=episode_length,
+        logger=logger,
+        save_path=model_dir,
+        seed=seed,
+        limited_date_range=limited_date_range,
+        scalarisation_fn=scalarisation_fn,
+        ref_point=ref_point,
+    )
     runner.run(fixed_start=fixed_start)
 
 
@@ -114,12 +98,13 @@ if __name__ == "__main__":
     scenario_constructor = Scenario.AddedEVScenario
     approach = Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty
-    rl_algorithm = RLAlgorithm.PCN  # PPO or PCN
+    rl_algorithm = RLAlgorithm.PPO  # PPO or PCN
     preference_vector = np.array([0.5, 0.5])  # only applied for single-objective RL algorithms
 
     # END CONFIGURATION #
 
-    scalarisation_fn = None if rl_algorithm.is_morl() else linear_scalariser(preference_vector)
+    scalarisation_fn = linear_scalariser(preference_vector) if not rl_algorithm.to_policy_class().is_morl else None
+    ref_point = calculate_ref_point(scenario_constructor) if rl_algorithm.to_policy_class().is_morl else None
     stage = Stage.Train
     forecaster = PersistenceForecaster(
         frequency=timedelta(hours=1), horizon=timedelta(hours=forecast_length), look_back=timedelta(hours=24)
@@ -169,9 +154,9 @@ if __name__ == "__main__":
             forecast_horizon=horizon,
             episode_length=episode_length,
             train_sys=train_sys,
-            scenario_constructor=scenario_constructor,
             rl_algorithm=rl_algorithm,
-            scalarisation_fn=scalarisation_fn,
             fixed_start=start,
             limited_date_range=[start, end],
+            scalarisation_fn=scalarisation_fn,
+            ref_point=ref_point,
         )

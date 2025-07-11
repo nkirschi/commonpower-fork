@@ -15,7 +15,7 @@ from commonpower.data_forecasting.forecasters import LookBackForecaster
 from commonpower.modeling.param_initialization import RangeInitializer
 
 from commonpower.control.environments import ControlEnv
-from commonpower.control.runners import SingleAgentTrainerSB3
+from commonpower.control.runners import SingleAgentTrainer
 from commonpower.control.controllers import RLController
 from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.wrappers import SingleAgentWrapper
@@ -170,7 +170,7 @@ class TestMORLFunctionality(unittest.TestCase):
 
         alg_config = MetaConfig(total_steps=2, seed=42, policy_class=PPOPolicy, algorithm_config=PPO_Config(n_steps=2))
 
-        trainer = SingleAgentTrainerSB3(
+        trainer = SingleAgentTrainer(
             sys=self.sys,
             alg_config=alg_config,
             wrapper=SingleAgentWrapper,

@@ -13,7 +13,7 @@ from commonpower.control.observation_handling import ObservationHandler
 from commonpower.control.controllers import RLController
 from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.safety_layer.safety_layers import ActionProjectionSafetyLayer
-from commonpower.control.runners import SingleAgentTrainerSB3, DeploymentRunner
+from commonpower.control.runners import SingleAgentTrainer, DeploymentRunner
 from commonpower.control.wrappers import SingleAgentWrapper
 from commonpower.data_forecasting.forecasters import *
 from commonpower.modeling.param_initialization import *
@@ -114,7 +114,7 @@ class TestControl(unittest.TestCase):
         model_path = "./tests/artifacts/saved_models/my_model"
         train_seed = 1
 
-        runner = SingleAgentTrainerSB3(
+        runner = SingleAgentTrainer(
             sys=sys,
             global_controller=agent1,
             wrapper=SingleAgentWrapper,

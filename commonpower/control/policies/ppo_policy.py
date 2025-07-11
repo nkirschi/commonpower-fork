@@ -11,6 +11,8 @@ class PPOPolicy(BasePolicy):
     It inherits from BasePolicy and implements the necessary methods.
     """
 
+    is_morl = False
+
     def __init__(self, env: Env, seed: int, callback=None, **library_specific_kwargs):
         super().__init__(env, seed, callback)
         self.library_specific_policy = PPO(env=env, seed=seed, **library_specific_kwargs)

@@ -5,6 +5,13 @@ from gymnasium import Env
 
 
 class BasePolicy(ABC):
+    @staticmethod
+    @abstractmethod
+    def is_morl():
+        """
+        Whether the policy is learnt with a MORL algorithm.
+        """
+
     @abstractmethod
     def __init__(self, env: Env, seed: int, callback=None, **library_specific_kwargs):
         """

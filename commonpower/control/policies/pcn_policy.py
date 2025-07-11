@@ -12,6 +12,8 @@ class PCNPolicy(BasePolicy):
     It inherits from BasePolicy and implements the necessary methods to interact with the PCN.
     """
 
+    is_morl = True
+
     def __init__(self, env: Env, seed: int, callback=None, **library_specific_kwargs):
         super().__init__(env, seed, callback)
 
