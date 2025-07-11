@@ -38,6 +38,7 @@ class SafetyCallback(BaseCallback):
         self.logger.record("safety/ep_penalty_mean", mean_episode_penalty)
         self.logger.record("safety/ep_corrections_mean", mean_n_corrections)
         self.logger.record("rollout/ep_rew_without_pen_mean", mean_episode_rew_without_pen)
+        self.logger.record("rollout/ep_cost_mean", -1 * mean_episode_rew_without_pen)
 
 
 class WandBSafetyCallback(WandbCallback):
