@@ -566,9 +566,10 @@ class DeploymentRunner(BaseRunner):
         if self.start_time is not None:
             self.fixed_start = self.start_time
 
-        # ToDo: more elegant way to solve this?
-        # Directly check if the algorithm is the PCN class.
-        is_morl = self.alg_config.policy_class.is_morl if self.alg_config else False
+        if self.alg_config and not isinstance(self.alg_config, MAPPOBaseConfig):
+            is_morl = self.alg_config.policy_class.is_morl
+        else:
+            is_morl = False
 
         # We have to wrap the environment with a DeploymentWrapper to ensure compatibility
         self.env = DeploymentWrapper(
