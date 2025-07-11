@@ -70,11 +70,16 @@ def run_experiment(
     runner.run(fixed_start=fixed_start)
 
 
-# TODO
 def calculate_ref_point(scenario_constructor):
     if scenario_constructor == Scenario.AddedEVScenario:
-        calculated_worst_case_cost = 1000.0
-        action_space_diameter = 1000.0
+        calculated_worst_case_cost = (
+            846.79  # from PCN-Bounds-AddedEVScenario.ipynb
+            # with HP calculated_worst_case_cost = 985.99
+        )
+        action_space_diameter = (
+            2000.00  # from PCN-Diameter-AddedEVScenario.ipynb
+            # with HP action_space_diameter = 2000.01
+        )
         return np.array([-calculated_worst_case_cost, -action_space_diameter])
     else:
         raise NotImplementedError("Reference point calculation for this scenario is not implemented.")
