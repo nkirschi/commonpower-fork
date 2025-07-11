@@ -1,5 +1,3 @@
-from typing import Self
-
 import numpy as np
 from gymnasium import Env
 from stable_baselines3 import PPO
@@ -26,7 +24,7 @@ class PPOPolicy(BasePolicy):
     def save(self, path: str) -> None:
         self.library_specific_policy.save(path)
 
-    def learn(self, total_timesteps: int, **kwargs) -> Self:
+    def learn(self, total_timesteps: int, **kwargs) -> None:
         log_interval = kwargs['log_interval']
         self.library_specific_policy.learn(
             total_timesteps=total_timesteps, callback=self.callback, log_interval=log_interval

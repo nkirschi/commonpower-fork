@@ -1,5 +1,3 @@
-from typing import Self
-
 import numpy as np
 import torch
 from gymnasium import Env
@@ -50,7 +48,7 @@ class PCNPolicy(BasePolicy):
     def save(self, path: str) -> None:
         torch.save(self.library_specific_policy.model, path)
 
-    def learn(self, total_timesteps: int, **kwargs) -> Self:
+    def learn(self, total_timesteps: int, **kwargs) -> None:
         eval_env = kwargs['eval_env']
         ref_point = kwargs['ref_point']
         self.library_specific_policy.train(total_timesteps=total_timesteps, eval_env=eval_env, ref_point=ref_point)

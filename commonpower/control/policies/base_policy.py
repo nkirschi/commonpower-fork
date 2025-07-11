@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Self
 
 import numpy as np
 from gymnasium import Env
@@ -52,7 +51,7 @@ class BasePolicy(ABC):
         """
 
     @abstractmethod
-    def learn(self, total_timesteps: int, **kwargs) -> Self:
+    def learn(self, total_timesteps: int, **kwargs) -> None:
         """
         Train the policy.
 
