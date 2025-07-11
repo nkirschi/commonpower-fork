@@ -131,7 +131,6 @@ if __name__ == "__main__":
             scenario_constructor=scenario_constructor.value,
             approach=approach,
             penalty=penalty,
-            rl_algorithm=rl_algorithm,
             forecast_length=forecast_length,
             forecaster=forecaster,
         )

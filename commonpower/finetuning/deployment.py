@@ -143,7 +143,6 @@ if __name__ == "__main__":
             stage=stage,
             approach=approach,
             penalty=penalty,
-            rl_algorithm=rl_algorithm,
             scenario_constructor=scenario_constructor.value,
             forecast_length=forecast_length,
             forecaster=forecaster,

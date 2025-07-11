@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
-from utils import Approach, CEnum, Penalty, RLAlgorithm, Stage
+from utils import Approach, CEnum, Penalty, Stage
 
 from commonpower.control.controllers import *
 from commonpower.control.runners import DeploymentRunner
@@ -44,7 +44,6 @@ def create_scenario(
     scenario_constructor: BaseScenario,
     approach: Approach,
     penalty: Penalty,
-    rl_algorithm: RLAlgorithm,
     forecast_length: int,
     forecaster: Forecaster,
 ):
