@@ -390,8 +390,11 @@ class SingleAgentTrainer(BaseTrainer):
         """
         self.prepare_run()
         total_timesteps = self.alg_config.total_steps
+
         # Define logging interval based on config of the algorithm
-        if self.alg_config.policy_class == PPOPolicy:
+        if self.alg_config.policy_class.is_morl:
+            pass
+        elif self.alg_config.policy_class == PPOPolicy:
             log_interval = int(self.alg_config.algorithm_config.n_steps / self.episode_length)
         elif self.alg_config.policy_class == SACPolicy:
             log_interval = int(self.episode_length / self.alg_config.algorithm_config.train_freq)

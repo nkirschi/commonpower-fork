@@ -3,6 +3,7 @@ import torch
 from gymnasium import Env
 from morl_baselines.multi_policy.pcn.pcn import PCN
 
+from commonpower.control.logging_utils.loggers import WandBLoggerSB3
 from commonpower.control.policies.base_policy import BasePolicy
 
 
@@ -33,6 +34,7 @@ class PCNPolicy(BasePolicy):
         self.learn_kwargs = {k: v for k, v in library_specific_kwargs.items() if k not in constructor_keys}
 
         self.library_specific_policy = PCN(env=env, seed=seed, **self.constructor_kwargs)
+        self.logger = WandBLoggerSB3()
 
         # Back up original methods
         self._original_run_episode = self.library_specific_policy._run_episode

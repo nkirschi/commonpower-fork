@@ -264,7 +264,7 @@ class MARLWandBLogger(BaseLogger):
         wandb.finish()
 
 
-class WandBOutputFormat(KVWriter):
+class WandBOutputFormatSB3(KVWriter):
     """
     Output format for Weights & Biases.
 
@@ -340,7 +340,7 @@ class WandBOutputFormat(KVWriter):
             wandb.finish()
 
 
-class WandBLoggerPCN(Logger):
+class WandBLoggerSB3(Logger):
     """
     Logger for Weights & Biases integration with Stable Baselines 3.
 
@@ -365,7 +365,7 @@ class WandBLoggerPCN(Logger):
             output_formats = []
 
         # Add WandB format
-        wandb_format = WandBOutputFormat(project=project_name, name=run_name, entity=entity_name, config=config)
+        wandb_format = WandBOutputFormatSB3(project=project_name, name=run_name, entity=entity_name, config=config)
         output_formats.append(wandb_format)
 
         super().__init__(folder=folder, output_formats=output_formats)
