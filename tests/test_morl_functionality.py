@@ -16,13 +16,12 @@ from commonpower.modeling.param_initialization import RangeInitializer
 
 from commonpower.control.environments import ControlEnv
 from commonpower.control.runners import SingleAgentTrainerSB3
-from commonpower.control.controllers import RLControllerSB3
+from commonpower.control.controllers import RLController
+from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.wrappers import SingleAgentWrapper
 from commonpower.control.safety_layer.safety_layers import ActionProjectionSafetyLayer
 from commonpower.control.safety_layer.penalties import DistanceDependingPenalty
 from commonpower.control.configs.algorithms import MetaConfig, PPO_Config
-from stable_baselines3 import PPO
-
 
 class TestMORLFunctionality(unittest.TestCase):
     """Unit tests for Multi-Objective Reinforcement Learning functionality"""
@@ -81,7 +80,7 @@ class TestMORLFunctionality(unittest.TestCase):
 
         # Create RL controller with safety layer and penalty function
         penalty = DistanceDependingPenalty(penalty_factor=10.0)
-        self.agent = RLControllerSB3(name="morl_agent", safety_layer=ActionProjectionSafetyLayer(penalty=penalty))
+        self.agent = RLController(name="morl_agent", safety_layer=ActionProjectionSafetyLayer(penalty=penalty))
         self.agent.add_entity(ess)
         self.agent.add_entity(trading_bus)
         self.agent.add_system(self.sys)
@@ -169,7 +168,7 @@ class TestMORLFunctionality(unittest.TestCase):
         weights = np.array([0.8, 0.2])
         scalarisation_fn = lambda r: np.dot(r, weights)
 
-        alg_config = MetaConfig(total_steps=2, seed=42, algorithm=PPO, algorithm_config=PPO_Config(n_steps=2))
+        alg_config = MetaConfig(total_steps=2, seed=42, policy_class=PPOPolicy, algorithm_config=PPO_Config(n_steps=2))
 
         trainer = SingleAgentTrainerSB3(
             sys=self.sys,

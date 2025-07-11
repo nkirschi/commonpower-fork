@@ -10,11 +10,11 @@ from commonpower.models.components import *
 from commonpower.models.buses import *
 from commonpower.models.powerflow import *
 from commonpower.control.observation_handling import ObservationHandler
-from commonpower.control.controllers import RLControllerSB3
+from commonpower.control.controllers import RLController
+from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.safety_layer.safety_layers import ActionProjectionSafetyLayer
 from commonpower.control.runners import SingleAgentTrainerSB3, DeploymentRunner
 from commonpower.control.wrappers import SingleAgentWrapper
-from stable_baselines3 import PPO
 from commonpower.data_forecasting.forecasters import *
 from commonpower.modeling.param_initialization import *
 from commonpower.data_forecasting.data_sources import CSVDataSource
@@ -97,14 +97,14 @@ class TestControl(unittest.TestCase):
         sys = System(power_flow_model=PowerBalanceModel()).add_node(n1).add_node(m1)
         n1.add_node(d1).add_node(e1).add_node(r1)
 
-        agent1 = RLControllerSB3(
+        agent1 = RLController(
             name="agent1",
             obs_handler=ObservationHandler(num_forecasts=4, num_past_observations=2),
             safety_layer=ActionProjectionSafetyLayer(penalty=DistanceDependingPenalty(penalty_factor=10.0)),
         )
 
         # set up configuration for the PPO algorithm
-        alg_config = MetaConfig(total_steps=1, seed=1, algorithm=PPO, algorithm_config=PPO_Config())
+        alg_config = MetaConfig(total_steps=1, seed=1, policy_class=PPOPolicy, algorithm_config=PPO_Config())
 
         # set up logger
         log_dir = "./tests/artifacts/test_run/"
@@ -133,7 +133,7 @@ class TestControl(unittest.TestCase):
 
         # First, we need to create a new agent and pass the pretrained_policy_path from which to load the neural network
         # params.
-        agent2 = RLControllerSB3(
+        agent2 = RLController(
             name="pretrained_agent",
             obs_handler=ObservationHandler(num_forecasts=4, num_past_observations=2),
             safety_layer=ActionProjectionSafetyLayer(penalty=DistanceDependingPenalty(penalty_factor=10.0)),

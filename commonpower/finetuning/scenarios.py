@@ -94,16 +94,11 @@ def create_scenario(
     if approach is Approach.OptimalController:
         controller = OptimalController(name="agent1")
     else:
-        if rl_algorithm.is_morl():
-            controller = RLControllerMORL(
-                name="agent1", safety_layer=safeguard, obs_handler=ObservationHandler(num_forecasts=forecast_length)
-            )
-        else:
-            controller = RLControllerSB3(
-                name="agent1",
-                safety_layer=safeguard,
-                obs_handler=ObservationHandler(num_forecasts=forecast_length),
-            )
+        controller = RLController(
+            name="agent1",
+            safety_layer=safeguard,
+            obs_handler=ObservationHandler(num_forecasts=forecast_length),
+        )
     controller.add_entity(sys.nodes[0])
 
     # Create deployment runner

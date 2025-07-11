@@ -1,6 +1,9 @@
-from abc import ABCMeta
+from typing import Type
 
+from numpy import ndarray
 from pydantic import BaseModel, ConfigDict
+
+from commonpower.control.policies.base_policy import BasePolicy
 
 
 class AlgorithmBaseConfig(BaseModel):
@@ -42,22 +45,28 @@ class SAC_Config(AlgorithmBaseConfig):
 
 
 class PCN_Config(AlgorithmBaseConfig):
-    n_steps: int = 24  # corresponds to 24 time steps, so 1 day if tau=1h
+    num_step_episodes: int = 24  # corresponds to 24 time steps, so 1 day if tau=1h
     gamma: float = 1.0  # MORL-Baselines PCN default
     hidden_dim: int = 64  # MORL-Baselines PCN default
     scaling_factor: float = 1.0  # we do not scale by default
     batch_size: int = 256  # MORL-Baselines PCN default
     learning_rate: float = 0.001  # MORL-Baselines PCN default
+    num_er_episodes: int = 20  # MORL-Baselines PCN default
+    num_step_episodes: int = 10  # MORL-Baselines PCN default
+    num_model_updates: int = 50  # MORL-Baselines PCN default
+    max_return: ndarray | None = None  # MORL-Baselines PCN default
+    max_buffer_size: int = 100  # MORL-Baselines PCN default
+    num_points_pf: int = 100  # MORL-Baselines PCN default
+    model_config = ConfigDict(arbitrary_types_allowed=True)  # necessary for ndarray
 
 
 class MetaConfig(BaseModel):
     total_steps: int
-    algorithm: ABCMeta
+    policy_class: Type[BasePolicy]
     seed: int
     algorithm_config: AlgorithmBaseConfig
     penalty_factor: float = 0.0
-    # necessary for ABCMeta type
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True)  # necessary for BasePolicy
 
 
 class MAPPOBaseConfig(BaseModel):

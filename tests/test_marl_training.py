@@ -27,6 +27,11 @@ class TestControl(unittest.TestCase):
         shutil.rmtree("./tests/artifacts/")
 
     def test_marl_training(self):
+        try:
+            import onpolicy
+        except ImportError:
+            return  # skip test if onpolicy is not installed
+
         horizon = timedelta(hours=24)
         frequency = timedelta(minutes=60)
 

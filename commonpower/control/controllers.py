@@ -14,15 +14,13 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 import torch as th
-from morl_baselines.multi_policy.pcn.pcn import PCN
 from pyomo.core import ConcreteModel, Objective, quicksum
 from pyomo.opt import TerminationCondition
 from pyomo.opt.solver import OptSolver
-from stable_baselines3.common.base_class import BasePolicy
 from stable_baselines3.common.utils import set_random_seed
 
 from commonpower.control.observation_handling import ObservationHandler
-from commonpower.control.pcn_callback_adapter import PCNAdapter
+from commonpower.control.policies.base_policy import BasePolicy
 from commonpower.control.util import clone_from_top_level_nodes, single_step_cost_callback
 from commonpower.core import System
 from commonpower.modeling.base import ControllableModelEntity
@@ -687,10 +685,12 @@ class RLBaseController(BaseController):
             self.train = False
 
 
-class RLControllerSB3(RLBaseController):
+class RLController(RLBaseController):
     """
-    Controller class for RL agents trained with algorithms from the StableBaselines repository
-    (https://stable-baselines3.readthedocs.io/). Single-agent RL algorithms only!
+    Controller class for RL agents trained with algorithms from one of the following repositories:
+    - StableBaselines3 (https://stable-baselines3.readthedocs.io/)
+    - MORL Baselines (https://lucasalegre.github.io/morl-baselines/)
+    Single-agent RL algorithms only!
 
     """
 
@@ -699,7 +699,7 @@ class RLControllerSB3(RLBaseController):
         Save neural network policy parameters and structure.
 
         Args:
-            policy (BasePolicy): policy trained with algorithm from StableBaselines
+            policy (BasePolicy): trained policy
             save_path (str): where to save the policy parameters
 
         Returns:
@@ -721,12 +721,11 @@ class RLControllerSB3(RLBaseController):
             env (ControlEnv): The gym environment constructed from the power system the RL algorithm interacts with. \
             Required to construct the neural network policy because it determines the number of inputs (observations) \
             and outputs (actions) of the network.
-            config (dict): Configuration for the StableBaselines policy class (also constructs training buffers etc., \
+            config (dict): Library-specific configuration for the policy class (also constructs training buffers etc., \
             which is why this also contains algorithm parameters).
             policy_kwargs (dict): Configuration of the actual neural networks of the policy (e.g., number of neurons \
             in the hidden layers of the actor and critic network of an ActorCriticPolicy). Depends on policy type. \
-            Consult the StableBaselines documentation (https://stable-baselines3.readthedocs.io/en/master/) for more \
-            information.
+            Consult the documentation of the respective library for more information.
 
         Returns:
             None
@@ -738,108 +737,13 @@ class RLControllerSB3(RLBaseController):
                 "No load path for pre-trained policy! Needs to be handed over in constructor (pretrained_policy_path)"
             )
         # has to be implemented by subclasses
-        TrainAlg = config.algorithm
-        self.policy = TrainAlg(
+        PolicyClass = config.policy_class
+        self.policy = PolicyClass(
             env=env, seed=config.seed, **config.algorithm_config.model_dump()  # pydantic Model to dictionary
         )
-        self.policy = self.policy.load(self.load_path)
+        self.policy.load(self.load_path)
         # ugly hack to overwrite the seed in in self.policy.load (which will be done with the seed used during training)
         set_random_seed(seed=config.seed)
-
-    def predict_action(self, obs: np.ndarray, deterministic: bool = True) -> np.ndarray:
-        """
-        Compute the control action based on a given observation by propagating this observation through the policy
-        network.
-
-        Args:
-            obs (np.ndarray): observation at current time step (has to be numpy array, not dictionary, since a \
-            dictionary cannot be processed by the neural network.)
-            deterministic (bool): Whether to use a deterministic action selection algorithm
-
-        Returns:
-            np.ndarray: control action
-        """
-        # actual forward pass of the current policy
-        action, _ = self.policy.predict(obs, deterministic=deterministic)
-        return action
-
-
-class RLControllerMORL(RLBaseController):
-    """
-    Controller class for RL agents trained with algorithms from the MORL Baselines repository
-    (https://lucasalegre.github.io/morl-baselines/). Single-agent RL algorithms only!
-
-    """
-
-    def save(self, policy: BasePolicy, save_path: str = "./saved_models/test_model"):
-        """
-        Save neural network policy parameters and structure.
-
-        Args:
-            policy (BasePolicy): policy trained with algorithm from MORL Baselines
-            save_path (str): where to save the policy parameters
-
-        Returns:
-            None
-
-        """
-        save_dir = os.path.dirname(save_path)
-        if save_dir and not os.path.exists(save_dir):
-            os.makedirs(save_dir, exist_ok=True)
-        # has to be implemented by subclasses
-        self.policy = policy
-        self.policy.save(savedir=save_dir)
-
-    def load(self, env, config: dict, policy_kwargs: dict = None):
-        """
-        Loading a pre-trained policy from a directory.
-
-        Args:
-            env (ControlEnv): The gym environment constructed from the power system the RL algorithm interacts with. \
-            Required to construct the neural network policy because it determines the number of inputs (observations) \
-            and outputs (actions) of the network.
-            config (dict): Configuration for the MORL Baselines algorithm (also constructs training buffers etc., \
-            which is why this also contains algorithm parameters).
-            policy_kwargs (dict): Configuration of the actual neural networks of the policy (e.g., number of neurons \
-            in the hidden layers of the actor and critic network of an ActorCriticPolicy). Depends on policy type. \
-            Consult the MORL Baslines documentation (https://lucasalegre.github.io/morl-baselines/) for more \
-            information.
-
-        Returns:
-            None
-
-        """
-        # check that a path from which to load the policy has been instantiated
-        if not self.load_path:
-            raise ValueError(
-                "No load path for pre-trained policy! Needs to be handed over in constructor (pretrained_policy_path)"
-            )
-        # has to be implemented by subclasses
-        TrainAlg = config.algorithm
-
-        # n_steps is not a valid argument for morl-baselines
-        algo_kwargs = config.algorithm_config.model_dump()
-        if TrainAlg is PCN:
-            if 'n_steps' in algo_kwargs:
-                del algo_kwargs['n_steps']
-            algo_kwargs['log'] = False  # Deactivate wandb logging for deployment
-
-        agent = TrainAlg(env=env, seed=config.seed, **algo_kwargs)
-
-        if TrainAlg is PCN:
-            self.policy = PCNAdapter(agent)
-
-            # If desired return/horizon are set on controller -> pass them to the agent (best practice see docu)
-            if hasattr(self, 'desired_return') and hasattr(self, 'desired_horizon'):
-                self.policy.pcn_agent.set_desired_return_and_horizon(self.desired_return, self.desired_horizon)
-            else:
-                warnings.warn(
-                    "PCN deployment: desired_return and desired_horizon not set on the controller. The agent may fail."
-                )
-
-            self.policy.load(self.load_path)
-        else:
-            self.policy = agent.load(self.load_path)
 
     def predict_action(self, obs: np.ndarray, deterministic: bool = True) -> np.ndarray:
         """

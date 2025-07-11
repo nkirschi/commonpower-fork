@@ -18,15 +18,21 @@ def run_experiment(
     train_sys: System,
     scalarisation_fn: callable,
     scenario_constructor: Scenario,
+    rl_algorithm: RLAlgorithm,
     seed: int,
     n_episodes: int,
     fixed_start: str,
     limited_date_range: List[datetime],
 ):
+    if rl_algorithm == RLAlgorithm.PCN:
+        total_steps = n_episodes * algo_config.num_step_episodes
+    elif rl_algorithm == RLAlgorithm.PPO:
+        total_steps = n_episodes * algo_config.n_steps
+
     train_config = MetaConfig(
-        total_steps=n_episodes * algo_config.n_steps,
+        total_steps=total_steps,
         seed=seed,
-        algorithm=rl_algorithm.to_algorithm_class(),
+        policy_class=rl_algorithm.to_policy_class(),
         algorithm_config=algo_config,
     )
 
@@ -108,8 +114,8 @@ if __name__ == "__main__":
     scenario_constructor = Scenario.AddedEVScenario
     approach = Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty
-    rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PPO
-    preference_vector = np.array([0.8, 0.2])  # only applied for single-objective RL algorithms
+    rl_algorithm = RLAlgorithm.PCN  # PPO or PCN
+    preference_vector = np.array([0.5, 0.5])  # only applied for single-objective RL algorithms
 
     # END CONFIGURATION #
 
@@ -138,12 +144,12 @@ if __name__ == "__main__":
         end = datetime.strptime(end_time, date_format)
 
         horizon = getattr(deployment_runner, "horizon")
-        episode_length = 1 + (end - start).total_seconds() // 3600
+        episode_length = 1 + (end - start).total_seconds() // 3600  # entire period in hours
 
         if rl_algorithm == RLAlgorithm.PCN:
             algo_config = PCN_Config(
                 device='auto',
-                n_steps=episode_length,
+                num_step_episodes=episode_length,
                 batch_size=episode_length,
             )
         elif rl_algorithm == RLAlgorithm.PPO:
@@ -165,6 +171,7 @@ if __name__ == "__main__":
             episode_length=episode_length,
             train_sys=train_sys,
             scenario_constructor=scenario_constructor,
+            rl_algorithm=rl_algorithm,
             scalarisation_fn=scalarisation_fn,
             fixed_start=start,
             limited_date_range=[start, end],

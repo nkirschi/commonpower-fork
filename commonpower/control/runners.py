@@ -29,7 +29,6 @@ from commonpower.control.configs.algorithms import MAPPOBaseConfig, MetaConfig
 from commonpower.control.controllers import OptimalController, RLBaseController
 from commonpower.control.environments import ControlEnv, default_scalarisation_fn
 from commonpower.control.logging_utils.loggers import BaseLogger, TensorboardLogger, WandBLogger
-from commonpower.control.pcn_callback_adapter import PCNAdapter
 from commonpower.control.util import t2n
 from commonpower.control.wrappers import DeploymentWrapper
 from commonpower.core import System
@@ -378,20 +377,21 @@ class SingleAgentTrainerSB3(BaseTrainer):
 
         """
         self.prepare_run()
-        training_steps = self.alg_config.total_steps
+        total_steps = self.alg_config.total_steps
         # Define logging interval based on config of the algorithm
-        if self.alg_config.algorithm == PPO:
-            log_int = int(self.alg_config.algorithm_config.n_steps / self.episode_length)
-        elif self.alg_config.algorithm == SAC:
-            log_int = int(self.episode_length / self.alg_config.algorithm_config.train_freq)
+        if self.alg_config.policy_class == PPO:
+            log_interval = int(self.alg_config.algorithm_config.n_steps / self.episode_length)
+        elif self.alg_config.policy_class == SAC:
+            log_interval = int(self.episode_length / self.alg_config.algorithm_config.train_freq)
         else:
-            log_int = 1
+            log_interval = 1
             print("Warning: Logging interval not defined for this algorithm. Logging after each training step.")
-        if log_int < 1:
-            log_int = 1
+        if log_interval < 1:
+            log_interval = 1
             print("Warning: Logging interval was infeasible. Logging after each training step.")
 
-        self.policy.learn(total_timesteps=training_steps, callback=self.logger.log_function(), log_interval=log_int)
+        self.policy.learn(total_timesteps=total_steps, callback=self.logger.log_function(), log_interval=log_interval)
+
         # store reference to model in controller
         for ctrl in self.sys.get_controllers(ctrl_types=[RLBaseController]).values():
             ctrl.save(self.policy, save_path=self.save_path)
@@ -409,7 +409,7 @@ class SingleAgentTrainerSB3(BaseTrainer):
 
         """
         super().prepare_run()
-        TrainAlg = self.alg_config.algorithm
+        TrainAlg = self.alg_config.policy_class
         if not self.policy:
             self.policy = TrainAlg(
                 env=self.env,
@@ -523,19 +523,15 @@ class SingleAgentTrainerMORL(BaseTrainer):
         Returns:
             None
         """
-        callbacks = [self.logger.log_function()]
-
         self.prepare_run()
         total_timesteps = self.alg_config.total_steps
 
-        adapter = PCNAdapter(self.policy, callbacks)
-
-        # Replace methods with wrapped versions
-        adapter.init_callbacks()
-        adapter.on_training_start()
-        adapter.train(total_timesteps=total_timesteps, eval_env=self.eval_env, ref_point=self.ref_point)
-        adapter.on_training_end()
-        adapter.restore_original_methods()
+        self.policy.learn(
+            total_timesteps=total_timesteps,
+            callback=self.logger.log_function(),
+            eval_env=self.eval_env,
+            ref_point=self.ref_point,
+        )
 
         # store reference to model in controller
         for ctrl in self.sys.get_controllers(ctrl_types=[RLBaseController]).values():
@@ -554,7 +550,7 @@ class SingleAgentTrainerMORL(BaseTrainer):
 
         """
         super().prepare_run(is_morl=True)
-        TrainAlg = self.alg_config.algorithm
+        TrainAlg = self.alg_config.policy_class
         if not self.policy:
             if self.logger is not None:
                 log = True
@@ -567,15 +563,12 @@ class SingleAgentTrainerMORL(BaseTrainer):
                 log = False
                 wandb_kwargs = {}
 
-            algo_kwargs = self.alg_config.algorithm_config.model_dump()
-            del algo_kwargs['n_steps']  # n_steps is not a valid argument for morl-baselines
-
             self.policy = TrainAlg(
                 env=self.env,
                 seed=self.seed,
                 log=log,
                 **wandb_kwargs,
-                **algo_kwargs,  # convert pydantic Model to dictionary
+                **self.alg_config.algorithm_config.model_dump(),  # convert pydantic Model to dictionary
             )
         self.eval_env = self.sys.create_env_func(
             episode_length=self.episode_length,
@@ -700,7 +693,7 @@ class DeploymentRunner(BaseRunner):
 
         # ToDo: more elegant way to solve this?
         # Directly check if the algorithm is the PCN class.
-        is_morl = self.alg_config.algorithm is PCN
+        is_morl = self.alg_config.policy_class is PCN if self.alg_config else False
 
         # We have to wrap the environment with a DeploymentWrapper to ensure compatibility
         self.env = DeploymentWrapper(

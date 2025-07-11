@@ -52,7 +52,7 @@ def run_deployment(
     alg_config = MetaConfig(
         total_steps=1,
         seed=train_seed,
-        algorithm=rl_algorithm.to_algorithm_class(),
+        policy_class=rl_algorithm.to_policy_class(),
         algorithm_config=algo_config,
     )
     # model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}'
