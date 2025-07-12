@@ -45,7 +45,6 @@ class SAC_Config(AlgorithmBaseConfig):
 
 
 class PCN_Config(AlgorithmBaseConfig):
-    num_step_episodes: int = 24  # corresponds to 24 time steps, so 1 day if tau=1h
     gamma: float = 1.0  # MORL-Baselines PCN default
     hidden_dim: int = 64  # MORL-Baselines PCN default
     scaling_factor: float = 1.0  # we do not scale by default
