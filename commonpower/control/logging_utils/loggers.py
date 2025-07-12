@@ -1,6 +1,7 @@
 """
 Collection of loggers for controller performance.
 """
+import os
 from typing import Callable
 
 import wandb
@@ -106,8 +107,8 @@ class WandBLogger(BaseLogger):
             config=self.alg_config,
             sync_tensorboard=True,
         )
-        self.model_save_path = self.log_dir + f"models/{self.run.id}"
-        self.log_dir = self.log_dir + f"runs/{self.run.id}"
+        self.model_save_path = os.path.join(self.log_dir, f"models/{self.run.id}")
+        self.log_dir = os.path.join(self.log_dir, f"runs/{self.run.id}")
 
     def log_function(self) -> BaseCallback:
         """
@@ -223,8 +224,8 @@ class MARLWandBLogger(BaseLogger):
         self.run = wandb.init(
             project=self.project_name, entity=self.entity_name, config=self.alg_config, sync_tensorboard=True
         )
-        self.model_save_path = self.log_dir + f"models/{self.run.id}"
-        self.log_dir = self.log_dir + f"runs/{self.run.id}"
+        self.model_save_path = os.path.join(self.log_dir, f"models/{self.run.id}")
+        self.log_dir = os.path.join(self.log_dir, f"runs/{self.run.id}")
 
         # init logger (importer from SB3)
         log_suffix = ""

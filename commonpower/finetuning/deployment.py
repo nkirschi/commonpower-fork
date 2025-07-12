@@ -55,8 +55,7 @@ def run_deployment(
         policy_class=rl_algorithm.to_policy_class(),
         algorithm_config=algo_config,
     )
-    # model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}'
-    model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}/PCN_model.pt'
+    model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}'
     # specify path for results
     results_dir = os.getcwd() + f'/results/{save_path}/{train_seed}'
     os.makedirs(results_dir, exist_ok=True)
@@ -117,7 +116,7 @@ if __name__ == "__main__":
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
     rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PPO
-    save_path = f'{scenario_constructor}/{approach}/{penalty}'
+    save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
     # Set the evaluation time frame - one year starting on January 1st
     # (quite time intensive, could also change to evaluating over multiple weeks during the year but less accurate)
     eval_periods = [

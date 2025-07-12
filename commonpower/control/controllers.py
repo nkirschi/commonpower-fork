@@ -706,12 +706,9 @@ class RLController(RLBaseController):
             None
 
         """
-        save_dir = os.path.dirname(save_path)
-        if save_dir and not os.path.exists(save_dir):
-            os.makedirs(save_dir, exist_ok=True)
         # has to be implemented by subclasses
         self.policy = policy
-        self.policy.save(save_path)
+        self.policy.save(os.path.join(save_path, 'model.zip'))
 
     def load(self, env, config: dict, policy_kwargs: dict = None):
         """
@@ -741,7 +738,7 @@ class RLController(RLBaseController):
         self.policy = PolicyClass(
             env=env, seed=config.seed, **config.algorithm_config.model_dump()  # pydantic Model to dictionary
         )
-        self.policy.load(self.load_path)
+        self.policy.load(os.path.join(self.load_path, 'model.zip'))
         # ugly hack to overwrite the seed in in self.policy.load (which will be done with the seed used during training)
         set_random_seed(seed=config.seed)
 

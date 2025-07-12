@@ -392,18 +392,17 @@ class SingleAgentTrainer(BaseTrainer):
         total_timesteps = self.alg_config.total_steps
 
         # Define logging interval based on config of the algorithm
-        if self.alg_config.policy_class.is_morl:
-            pass
-        elif self.alg_config.policy_class == PPOPolicy:
-            log_interval = int(self.alg_config.algorithm_config.n_steps / self.episode_length)
-        elif self.alg_config.policy_class == SACPolicy:
-            log_interval = int(self.episode_length / self.alg_config.algorithm_config.train_freq)
-        else:
-            log_interval = 1
-            print("Warning: Logging interval not defined for this algorithm. Logging after each training step.")
-        if log_interval < 1:
-            log_interval = 1
-            print("Warning: Logging interval was infeasible. Logging after each training step.")
+        if not self.alg_config.policy_class.is_morl:
+            if self.alg_config.policy_class == PPOPolicy:
+                log_interval = int(self.alg_config.algorithm_config.n_steps / self.episode_length)
+            elif self.alg_config.policy_class == SACPolicy:
+                log_interval = int(self.episode_length / self.alg_config.algorithm_config.train_freq)
+            else:
+                log_interval = 1
+                print("Warning: Logging interval not defined for this algorithm. Logging after each training step.")
+            if log_interval < 1:
+                log_interval = 1
+                print("Warning: Logging interval was infeasible. Logging after each training step.")
 
         if self.policy.is_morl:
             additional_kwargs = {'eval_env': self.eval_env, 'ref_point': self.ref_point}
