@@ -184,7 +184,7 @@ class TestMORLFunctionality(unittest.TestCase):
         except Exception as e:
             self.fail(f"SingleAgentTrainer failed to run with scalarization: {e}")
 
-        self.assertTrue(os.path.exists(model_path.with_suffix(".zip")), "Trainer should save a model file.")
+        self.assertTrue(os.path.exists(os.path.join(model_path, 'model.zip')), "Trainer should save a model file.")
 
 
 if __name__ == "__main__":
