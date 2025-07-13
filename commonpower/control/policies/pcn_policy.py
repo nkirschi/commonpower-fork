@@ -18,8 +18,6 @@ class PCNPolicy(BasePolicy):
     def __init__(self, env: Env, seed: int, callback=None, **library_specific_kwargs):
         super().__init__(env, seed, callback)
 
-        self.__dict__.update(library_specific_kwargs)
-
         self.logger = WandBLoggerSB3()
 
         constructor_keys = [
@@ -31,15 +29,20 @@ class PCNPolicy(BasePolicy):
             'noise',
             'device',
             'model_class',
+            'log',
         ]
         self.constructor_kwargs = {k: v for k, v in library_specific_kwargs.items() if k in constructor_keys}
         self.learn_kwargs = {k: v for k, v in library_specific_kwargs.items() if k not in constructor_keys}
 
-        # Set for no wandb logging during deployment
-        self.constructor_kwargs['log'] = False
-
         self.library_specific_policy = PCN(env=env, seed=seed, **self.constructor_kwargs)
         self.logger = WandBLoggerSB3()
+
+        try:
+            desired_return = library_specific_kwargs.pop('desired_return')
+            desired_horizon = library_specific_kwargs.pop('desired_horizon')
+            self.library_specific_policy.set_desired_return_and_horizon(desired_return, desired_horizon)
+        except KeyError:
+            print('Info: no desired_return and desired_horizon has been set for PCN yet')
 
         # Back up original methods
         self._original_run_episode = self.library_specific_policy._run_episode
@@ -64,13 +67,6 @@ class PCNPolicy(BasePolicy):
 
     def predict(self, obs: np.ndarray, deterministic: bool = False) -> np.ndarray:
         return self.library_specific_policy.eval(obs), None
-
-    def set_deployment_preferences(self, desired_return: np.ndarray, desired_horizon: int):
-        """
-        Sets the desired return and horizon for the PCN agent during deployment.
-        """
-        if hasattr(self.library_specific_policy, 'set_desired_return_and_horizon'):
-            self.library_specific_policy.set_desired_return_and_horizon(desired_return, desired_horizon)
 
     def _wrap_methods(self):
         """Wrap PCN methods to inject callback calls."""

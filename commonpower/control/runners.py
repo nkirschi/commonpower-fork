@@ -26,6 +26,7 @@ from commonpower.control.controllers import OptimalController, RLBaseController
 from commonpower.control.environments import ControlEnv, default_scalarisation_fn
 from commonpower.control.logging_utils.loggers import BaseLogger, TensorboardLogger
 from commonpower.control.policies.base_policy import BasePolicy
+from commonpower.control.policies.pcn_policy import PCNPolicy
 from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.policies.sac_policy import SACPolicy
 from commonpower.control.util import t2n
@@ -591,7 +592,14 @@ class DeploymentRunner(BaseRunner):
             # load RL policies
             self.alg_config.seed = self.seed  # need to hand over the seed to re-load the policy
             if not rl_ctrl.policy:
-                rl_ctrl.load(env=self.env, config=self.alg_config)
+                policy_kwargs = {}
+                if is_morl:
+                    policy_kwargs.update({'log': False})
+                    if self.alg_config.policy_class == PCNPolicy:
+                        policy_kwargs.update(
+                            {'desired_return': self.desired_return, 'desired_horizon': self.desired_horizon}
+                        )
+                rl_ctrl.load(env=self.env, config=self.alg_config, policy_kwargs=policy_kwargs)
 
 
 class MAPPOTrainer(BaseTrainer):

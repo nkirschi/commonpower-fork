@@ -736,14 +736,11 @@ class RLController(RLBaseController):
         # has to be implemented by subclasses
         PolicyClass = config.policy_class
         self.policy = PolicyClass(
-            env=env, seed=config.seed, **config.algorithm_config.model_dump()  # pydantic Model to dictionary
+            env=env,
+            seed=config.seed,
+            **policy_kwargs,
+            **config.algorithm_config.model_dump(),  # pydantic Model to dictionary
         )
-
-        if hasattr(self, 'desired_return') and hasattr(self, 'desired_horizon'):
-            if hasattr(self.policy, 'set_deployment_preferences'):
-                self.policy.set_deployment_preferences(
-                    desired_return=self.desired_return, desired_horizon=self.desired_horizon
-                )
 
         self.policy.load(os.path.join(self.load_path, 'model.zip'))
         # ugly hack to overwrite the seed in in self.policy.load (which will be done with the seed used during training)

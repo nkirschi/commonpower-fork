@@ -75,12 +75,6 @@ def run_deployment(
         rl_controller = getattr(system_nodes[0], "controller")
         setattr(rl_controller, "load_path", model_dir)
 
-        if rl_algorithm == RLAlgorithm.PCN:
-            if desired_return is not None:
-                rl_controller.desired_return = desired_return
-            if desired_horizon is not None:
-                rl_controller.desired_horizon = desired_horizon
-
     for i, eval_period in enumerate(eval_periods):
         history = ModelHistory([scenario])
         deployer = DeploymentRunner(
@@ -92,6 +86,11 @@ def run_deployment(
             wrapper=wrappers.get_stack(),
             continuous_control=True,
         )
+        if rl_algorithm == RLAlgorithm.PCN:
+            if desired_return is not None:
+                deployer.desired_return = desired_return
+            if desired_horizon is not None:
+                deployer.desired_horizon = desired_horizon
         datetime_format = "%d.%m.%Y"
         deployer.set_start_time(datetime.strptime(eval_period, datetime_format))
         deployer.run(n_steps=n_eval_steps)
