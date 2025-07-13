@@ -48,6 +48,8 @@ def run_deployment(
     eval_periods: List[str],
     n_eval_steps: int,
     eval_seed: int,
+    desired_return: Optional[np.ndarray] = None,
+    desired_horizon: Optional[int] = None,
 ):
     alg_config = MetaConfig(
         total_steps=1,
@@ -74,12 +76,10 @@ def run_deployment(
         setattr(rl_controller, "load_path", model_dir)
 
         if rl_algorithm == RLAlgorithm.PCN:
-            # for now we just use the mean return from the last step in the training...
-            # step 74400 	 return [-33.08533    -0.6472926], ([0. 0.]) 	 loss 7.450E-02 	 horizons 744.0
-            # for the future we might use values from eval/front table...
-            # or choose a point that is slightly better than the achieved front
-            rl_controller.desired_return = np.array([-33.08533, -0.6472926])
-            rl_controller.desired_horizon = 364 * 24  # one year ( same as n_eval_steps )
+            if desired_return is not None:
+                rl_controller.desired_return = desired_return
+            if desired_horizon is not None:
+                rl_controller.desired_horizon = desired_horizon
 
     for i, eval_period in enumerate(eval_periods):
         history = ModelHistory([scenario])
@@ -125,6 +125,13 @@ if __name__ == "__main__":
     n_eval_steps = 364 * 24  # one year
     eval_seed = 5
 
+    # for now we just use the mean return from the last step in the training...
+    # step 74400 	 return [-33.08533    -0.6472926], ([0. 0.]) 	 loss 7.450E-02 	 horizons 744.0
+    # for the future we might use values from eval/front table...
+    # or choose a point that is slightly better than the achieved front
+    pcn_desired_return = np.array([-33.08533, -0.6472926])
+    pcn_desired_horizon = 364 * 24  # one year ( same as n_eval_steps )
+
     stage = Stage.Deploy
     forecast_length = 6
     forecaster = PersistenceForecaster(
@@ -134,8 +141,7 @@ if __name__ == "__main__":
     if approach is Approach.OptimalController:
         seeds = [1]
     else:
-        # seeds = [1, 2, 3, 4, 5]
-        seeds = [1]
+        seeds = [1, 2, 3, 4, 5]
 
     for seed in seeds:
         scenario, deployment_runner = create_scenario(
@@ -180,6 +186,8 @@ if __name__ == "__main__":
             eval_periods=eval_periods,
             n_eval_steps=n_eval_steps,
             eval_seed=eval_seed,
+            desired_return=pcn_desired_return,
+            desired_horizon=pcn_desired_horizon,
         )
 
     # average results over seeds:

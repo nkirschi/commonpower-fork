@@ -35,6 +35,9 @@ class PCNPolicy(BasePolicy):
         self.constructor_kwargs = {k: v for k, v in library_specific_kwargs.items() if k in constructor_keys}
         self.learn_kwargs = {k: v for k, v in library_specific_kwargs.items() if k not in constructor_keys}
 
+        # Set for no wandb logging during deployment
+        self.constructor_kwargs['log'] = False
+
         self.library_specific_policy = PCN(env=env, seed=seed, **self.constructor_kwargs)
         self.logger = WandBLoggerSB3()
 
@@ -61,6 +64,13 @@ class PCNPolicy(BasePolicy):
 
     def predict(self, obs: np.ndarray, deterministic: bool = False) -> np.ndarray:
         return self.library_specific_policy.eval(obs), None
+
+    def set_deployment_preferences(self, desired_return: np.ndarray, desired_horizon: int):
+        """
+        Sets the desired return and horizon for the PCN agent during deployment.
+        """
+        if hasattr(self.library_specific_policy, 'set_desired_return_and_horizon'):
+            self.library_specific_policy.set_desired_return_and_horizon(desired_return, desired_horizon)
 
     def _wrap_methods(self):
         """Wrap PCN methods to inject callback calls."""
