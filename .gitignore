@@ -14,6 +14,5 @@ venv
 .vscode/
 test_run/
 tuner/
-results/
 commonpower/finetuning/weights/*
 commonpower/finetuning/tensorboard/*
