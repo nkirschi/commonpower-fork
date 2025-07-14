@@ -158,7 +158,7 @@ if __name__ == "__main__":
         # set up configuration for the PCN/PPO algorithm
         if rl_algorithm == RLAlgorithm.PCN:
             algo_config = PCN_Config(
-                device='auto',
+                device='cpu',
                 n_steps=n_eval_steps,
                 batch_size=24,
             )

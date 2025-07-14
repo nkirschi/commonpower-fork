@@ -55,7 +55,9 @@ class PCNPolicy(BasePolicy):
         return self.library_specific_policy.env
 
     def load(self, path: str) -> None:
-        self.library_specific_policy.model = torch.load(path, map_location=torch.device('cpu'), weights_only=False)
+        self.library_specific_policy.model = torch.load(
+            path, map_location=self.library_specific_policy.device, weights_only=False
+        )
 
     def save(self, path: str) -> None:
         torch.save(self.library_specific_policy.model, path)
