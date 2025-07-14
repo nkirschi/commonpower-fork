@@ -56,9 +56,9 @@ def run_deployment(
         policy_class=rl_algorithm.to_policy_class(),
         algorithm_config=algo_config,
     )
-    model_dir = os.getcwd() + f'/models/{save_path}/{train_seed}'
+    model_dir = os.path.join(os.getcwd(), 'models', save_path, str(train_seed))
     # specify path for results
-    results_dir = os.getcwd() + f'/results/{save_path}/{train_seed}'
+    results_dir = os.path.join(os.getcwd(), 'results', save_path, str(train_seed))
     os.makedirs(results_dir, exist_ok=True)
 
     wrappers = WrapperStack()
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     approach = Approach.WithProjectionSafeguard  # Approach.OptimalController
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
-    rl_algorithm = RLAlgorithm.PPO  # RLAlgorithm.PCN
+    rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PPO
 
     ppo_variant = "PPO_80-20"  # PPO_50-50
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     # step 74400 	 return [-33.08533    -0.6472926], ([0. 0.]) 	 loss 7.450E-02 	 horizons 744.0
     # for the future we might use values from eval/front table...
     # or choose a point that is slightly better than the achieved front
-    pcn_desired_return = np.array([-33.08533, -0.6472926])
+    pcn_desired_return = np.array([-10.0, -0.1])
     pcn_desired_horizon = 364 * 24  # one year ( same as n_eval_steps )
 
     stage = Stage.Deploy
