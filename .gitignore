@@ -16,3 +16,4 @@ test_run/
 tuner/
 commonpower/finetuning/weights/*
 commonpower/finetuning/tensorboard/*
+commonpower/finetuning/*.sh
