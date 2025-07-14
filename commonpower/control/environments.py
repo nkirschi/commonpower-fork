@@ -147,7 +147,7 @@ class ControlEnv(gym.Env):
         # update history with reward penalty
         for agent_id, agent in self.controllers.items():
             agent.update_history({"reward_without_penalty": rewards[agent_id][0]})
-            agent.update_history({"reward": self.scalarisation_fn(rewards[agent_id])})
+            agent.update_history({"reward": self.scalarisation_fn(rewards[agent_id]) if self.scalarisation_fn else 0.0})
         # get train history at end of episode:
         if terminated or truncated:
             self.train_history = {agent_id: copy(agent.history) for agent_id, agent in self.controllers.items()}
