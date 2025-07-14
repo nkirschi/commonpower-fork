@@ -5,7 +5,6 @@ from utils import *
 
 from commonpower.control.configs.algorithms import *
 from commonpower.control.wrappers import *
-from commonpower.utils.helpers import get_adjusted_cost
 
 
 def compute_average_results_over_seeds(results_dir, seeds):
@@ -61,11 +60,6 @@ def run_deployment(
     # specify path for results
     results_dir = os.getcwd() + f'/results/{save_path}/{train_seed}'
     os.makedirs(results_dir, exist_ok=True)
-    # result data frames
-    cum_cost_df = pd.DataFrame(
-        columns=["cum_reward", "n_interventions"],
-        index=[i for i in range(len(eval_periods))],
-    )
 
     wrappers = WrapperStack()
     if not (approach is Approach.OptimalController):
@@ -95,19 +89,13 @@ def run_deployment(
         deployer.set_start_time(datetime.strptime(eval_period, datetime_format))
         deployer.run(n_steps=n_eval_steps)
 
-        history.get_history_for_element(scenario.nodes[0], 'cost')
-        cumulative_cost = get_adjusted_cost(history, scenario)
-        print(f"Cumulative cost: {round(sum(cumulative_cost), 2)} €")
-        cum_cost_df.iloc[i, 0] = round(sum(cumulative_cost), 2)
-        if approach is Approach.OptimalController:
-            num_interventions = 0
-        else:
-            controller_history = scenario.controllers["agent1"].deployment_history[0]["action_corrected"]
-            num_interventions = sum([controller_history[i][1] for i in range(len(controller_history))])
+        results_df = pd.DataFrame(deployer.deployment_log)
+        results_df['cum_cost'] = -results_df['cum_reward']
+        results_df = results_df[['cum_cost', 'cum_reward', 'n_interventions']]
+        results_df.to_csv(results_dir + "/seed_results.csv")
 
-        cum_cost_df.iloc[i, 1] = num_interventions
-
-        cum_cost_df.to_csv(results_dir + "/seed_results.csv")
+        final_cost = results_df['cum_cost'].iloc[-1]
+        print(f"Cumulative cost: {final_cost} €")
 
 
 if __name__ == "__main__":

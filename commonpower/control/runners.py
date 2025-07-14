@@ -514,6 +514,7 @@ class DeploymentRunner(BaseRunner):
         )
         self.alg_config = alg_config
         self.wrapper = wrapper
+        self.deployment_log = []
 
     def _run(self, n_steps: int = 24):
         """
@@ -530,6 +531,10 @@ class DeploymentRunner(BaseRunner):
         # run
         obs, _ = self.env.reset()
 
+        self.deployment_log = []
+        cumulative_reward = 0
+        cumulative_interventions = 0
+
         for step in tqdm(range(n_steps)):
             if self.rl_controllers:
                 # we loop through all RL controllers to compute their actions given the current state. The union of all
@@ -543,6 +548,20 @@ class DeploymentRunner(BaseRunner):
                 rl_actions = None
 
             obs, reward, terminated, truncated, info = self.env.step(action=rl_actions)
+
+            # Get and accumulate reward for current step
+            step_reward = sum(reward.values()) if isinstance(reward, dict) else reward
+            cumulative_reward += step_reward
+            # Get and accumulate interventions for  current step
+            step_interventions = 0
+            if self.rl_controllers:
+                for rl_ctrl in self.rl_controllers.values():
+                    if rl_ctrl.deployment_history and rl_ctrl.deployment_history[0]["action_corrected"]:
+                        # Get intervention flag (1 if corrected, 0 otherwise) from last recorded action
+                        step_interventions += rl_ctrl.deployment_history[0]["action_corrected"][-1][1]
+            cumulative_interventions += step_interventions
+
+            self.deployment_log.append({'cum_reward': cumulative_reward, 'n_interventions': cumulative_interventions})
 
             if step == n_steps - 1:
                 # terminal step
