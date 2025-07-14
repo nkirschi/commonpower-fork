@@ -102,8 +102,15 @@ if __name__ == "__main__":
     approach = Approach.WithProjectionSafeguard  # Approach.OptimalController
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
-    rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PPO
-    save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
+    rl_algorithm = RLAlgorithm.PPO  # RLAlgorithm.PCN
+
+    ppo_variant = "PPO_80-20"  # PPO_50-50
+
+    if rl_algorithm == RLAlgorithm.PPO:
+        save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{ppo_variant}'
+    else:
+        save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
+
     # Set the evaluation time frame - one year starting on January 1st
     # (quite time intensive, could also change to evaluating over multiple weeks during the year but less accurate)
     eval_periods = [
