@@ -50,12 +50,14 @@ def run_deployment(
     desired_return: Optional[np.ndarray] = None,
     desired_horizon: Optional[int] = None,
 ):
-    alg_config = MetaConfig(
-        total_steps=1,
-        seed=train_seed,
-        policy_class=rl_algorithm.to_policy_class(),
-        algorithm_config=algo_config,
-    )
+    alg_config = None
+    if approach is not Approach.OptimalController:
+        alg_config = MetaConfig(
+            total_steps=1,
+            seed=train_seed,
+            policy_class=rl_algorithm.to_policy_class(),
+            algorithm_config=algo_config,
+        )
     model_dir = os.path.join(os.getcwd(), 'models', save_path, str(train_seed))
     # specify path for results
     results_dir = os.path.join(os.getcwd(), 'results', save_path, str(train_seed))
@@ -99,16 +101,21 @@ def run_deployment(
 
 
 if __name__ == "__main__":
-    approach = Approach.WithProjectionSafeguard  # Approach.OptimalController
+    approach = Approach.OptimalController  # Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
-    rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PPO
+    rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PCN or RLAlgorithm.PPO or None if Approach.OptimalController
 
     ppo_variant = "PPO_80-20"  # PPO_50-50
 
-    if rl_algorithm == RLAlgorithm.PPO:
+    if approach is Approach.OptimalController:
+        save_path = f'{scenario_constructor.name}/{approach.name}'
+        # Set to None for Approach.OptimalController if not already for
+        rl_algorithm = None
+        algo_config = None
+    elif rl_algorithm == RLAlgorithm.PPO:
         save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{ppo_variant}'
-    else:
+    else:  # PCN
         save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
 
     # Set the evaluation time frame - one year starting on January 1st
@@ -124,7 +131,7 @@ if __name__ == "__main__":
     # step 74400 	 return [-33.08533    -0.6472926], ([0. 0.]) 	 loss 7.450E-02 	 horizons 744.0
     # for the future we might use values from eval/front table...
     # or choose a point that is slightly better than the achieved front
-    pcn_desired_return = np.array([-10.0, -0.1])
+    pcn_desired_return = np.array([-0, -0])
     pcn_desired_horizon = 364 * 24  # one year ( same as n_eval_steps )
 
     stage = Stage.Deploy
@@ -152,7 +159,9 @@ if __name__ == "__main__":
         horizon = getattr(deployment_runner, "horizon")
 
         # set up configuration for the PCN/PPO algorithm
-        if rl_algorithm == RLAlgorithm.PCN:
+        if approach is Approach.OptimalController:
+            algo_config = None
+        elif rl_algorithm == RLAlgorithm.PCN:
             algo_config = PCN_Config(
                 device=device,
                 n_steps=n_eval_steps,

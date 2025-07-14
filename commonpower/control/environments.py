@@ -135,38 +135,45 @@ class ControlEnv(gym.Env):
         # the obs_handler of each controller will
         # a) take care of removing unwanted forecasts and
         # b) stack past observations if specified
-        obs = {
-            agent: self.controllers[agent].obs_handler.get_adjusted_obs(agent_obs)
-            for agent, agent_obs in obs.items()
-            if agent in self.controllers.keys()
-        }
-        # rewards are vectors of negative cost and safety penalty
-        rewards = {
-            agent: np.array([-costs[agent], -info["safety_penalties"][agent]]) for agent in self.controllers.keys()
-        }
-        # update history with reward penalty
-        for agent_id, agent in self.controllers.items():
-            agent.update_history({"reward_without_penalty": rewards[agent_id][0]})
-            agent.update_history({"reward": self.scalarisation_fn(rewards[agent_id]) if self.scalarisation_fn else 0.0})
-        # get train history at end of episode:
-        if terminated or truncated:
-            self.train_history = {agent_id: copy(agent.history) for agent_id, agent in self.controllers.items()}
-            for agent_id in self.controllers.keys():
-                self.episode_history[agent_id].append(
-                    {
-                        "mean_penalty": np.mean([t[1] for t in self.train_history[agent_id]["safety_penalty"]]),
-                        "rew_without_penalty": np.sum(
-                            [t[1] for t in self.train_history[agent_id]["reward_without_penalty"]]
-                        ),
-                        "n_corrections": np.sum([t[1] for t in self.train_history[agent_id]["action_corrected"]]),
-                        "reward": np.sum([t[1] for t in self.train_history[agent_id]["reward"]]),
-                    }
+        if self.controllers:
+            obs = {
+                agent: self.controllers[agent].obs_handler.get_adjusted_obs(agent_obs)
+                for agent, agent_obs in obs.items()
+                if agent in self.controllers.keys()
+            }
+            # rewards are vectors of negative cost and safety penalty
+            rewards = {
+                agent: np.array([-costs[agent], -info["safety_penalties"][agent]]) for agent in self.controllers.keys()
+            }
+            # update history with reward penalty
+            for agent_id, agent in self.controllers.items():
+                agent.update_history({"reward_without_penalty": rewards[agent_id][0]})
+                agent.update_history(
+                    {"reward": self.scalarisation_fn(rewards[agent_id]) if self.scalarisation_fn else 0.0}
                 )
+            # get train history at end of episode:
+            if terminated or truncated:
+                self.train_history = {agent_id: copy(agent.history) for agent_id, agent in self.controllers.items()}
+                for agent_id in self.controllers.keys():
+                    self.episode_history[agent_id].append(
+                        {
+                            "mean_penalty": np.mean([t[1] for t in self.train_history[agent_id]["safety_penalty"]]),
+                            "rew_without_penalty": np.sum(
+                                [t[1] for t in self.train_history[agent_id]["reward_without_penalty"]]
+                            ),
+                            "n_corrections": np.sum([t[1] for t in self.train_history[agent_id]["action_corrected"]]),
+                            "reward": np.sum([t[1] for t in self.train_history[agent_id]["reward"]]),
+                        }
+                    )
 
-        # scalarise reward vectors if a scalarisation function is provided
-        if self.scalarisation_fn is not None:
-            rewards = {agent: self.scalarisation_fn(reward) for agent, reward in rewards.items()}
+            # scalarise reward vectors if a scalarisation function is provided
+            if self.scalarisation_fn is not None:
+                rewards = {agent: self.scalarisation_fn(reward) for agent, reward in rewards.items()}
 
+        else:
+            # If no RL controllers -> calculate total system reward for OptimalController
+            total_cost = sum(costs.values())
+            rewards = -total_cost
         return obs, rewards, terminated, truncated, info
 
     def reset(
