@@ -118,6 +118,7 @@ if __name__ == "__main__":
     ]  # since we only have data from 2016 and our forecaster uses a lookback horizon of 24 hours
     n_eval_steps = 364 * 24  # one year
     eval_seed = 5
+    device = 'cpu'  # 'auto'
 
     # for now we just use the mean return from the last step in the training...
     # step 74400 	 return [-33.08533    -0.6472926], ([0. 0.]) 	 loss 7.450E-02 	 horizons 744.0
@@ -153,13 +154,13 @@ if __name__ == "__main__":
         # set up configuration for the PCN/PPO algorithm
         if rl_algorithm == RLAlgorithm.PCN:
             algo_config = PCN_Config(
-                device='cpu',
+                device=device,
                 n_steps=n_eval_steps,
                 batch_size=24,
             )
         elif rl_algorithm == RLAlgorithm.PPO:
             algo_config = PPO_Config(
-                device="cpu",
+                device=device,
                 n_steps=96,
                 batch_size=24,
                 learning_rate=0.0008,

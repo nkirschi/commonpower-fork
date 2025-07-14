@@ -98,6 +98,7 @@ if __name__ == "__main__":
     forecast_length = 6
     start_time = "2016-07-01 00:00:00"
     end_time = "2016-07-31 23:00:00"
+    device = 'cpu'  # 'auto'
 
     # modelling hyperparameters
     scenario_constructor = Scenario.AddedEVScenario
@@ -137,13 +138,13 @@ if __name__ == "__main__":
 
         if rl_algorithm == RLAlgorithm.PCN:
             algo_config = PCN_Config(
-                device='auto',
+                device=device,
                 num_step_episodes=episode_length,
                 batch_size=episode_length,
             )
         elif rl_algorithm == RLAlgorithm.PPO:
             algo_config = PPO_Config(
-                device='auto',
+                device=device,
                 n_steps=episode_length,
                 batch_size=episode_length,
                 learning_rate=0.0008,
