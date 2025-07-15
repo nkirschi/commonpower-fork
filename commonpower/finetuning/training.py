@@ -158,7 +158,7 @@ if __name__ == "__main__":
                     n_steps=episode_length,
                     batch_size=episode_length,
                     learning_rate=0.008,
-                    train_freq=(1, 'episode'),
+                    train_freq=episode_length,
                 )
             case RLAlgorithm.PCN:
                 algo_config = PCN_Config(device=device, batch_size=episode_length, num_er_episodes=n_episodes // 10)
