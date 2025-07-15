@@ -17,8 +17,8 @@ def compute_average_results_over_seeds(results_dir, seeds):
     mean_std_df = pd.DataFrame()
 
     for key in all_results.keys():
-        mean_std_df.loc[0, key + "_mean"] = f'{all_results[key].mean():.2f}'
-        mean_std_df.loc[0, key + "_std"] = f'{all_results[key].std():.2f}'
+        mean_std_df.loc[0, key + "_mean"] = all_results[key].mean()
+        mean_std_df.loc[0, key + "_std"] = all_results[key].std()
 
     mean_std_df.to_csv(results_dir + "/approach_results.csv")
 
@@ -51,7 +51,7 @@ def run_deployment(
     os.makedirs(results_dir, exist_ok=True)
 
     wrappers = WrapperStack()
-    if not (approach is Approach.OptimalController):
+    if approach is not Approach.OptimalController:
         wrappers.add(SingleAgentWrapper)
         # set pre-trained policy in RL controller
         system_nodes = getattr(scenario, "nodes")
@@ -91,19 +91,19 @@ if __name__ == "__main__":
     approach = Approach.WithProjectionSafeguard  # Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
-    rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PCN or RLAlgorithm.PPO or None if Approach.OptimalController
+    rl_algorithm = RLAlgorithm.PPO  # RLAlgorithm.PCN or RLAlgorithm.PPO or None if Approach.OptimalController
 
-    scalarisation_code = "80-20"  # 50-50
+    scalarisation_code = "50-50"  # 50-50
 
     if approach is Approach.OptimalController:
         save_path = f'{scenario_constructor.name}/{approach.name}'
         # Set to None for Approach.OptimalController if not already for
         rl_algorithm = None
         algo_config = None
-
-    save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
-    if not rl_algorithm.to_policy_class().is_morl:
-        save_path += f'_{scalarisation_code}'
+    else:
+        save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
+        if not rl_algorithm.to_policy_class().is_morl:
+            save_path += f'_{scalarisation_code}'
 
     # Set the evaluation time frame - one year starting on January 1st
     # (quite time intensive, could also change to evaluating over multiple weeks during the year but less accurate)

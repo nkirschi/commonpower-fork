@@ -555,10 +555,13 @@ class DeploymentRunner(BaseRunner):
                 rl_actions = None
 
             obs, reward, terminated, truncated, info = self.env.step(action=rl_actions)
-
             # Get and accumulate reward components for current step
-            cum_cost += -reward[0]
-            cum_penalty += -reward[1]
+            if isinstance(reward, np.ndarray):
+                cum_cost += -reward[0]
+                cum_penalty += -reward[1]
+            else:
+                cum_cost += -reward
+                cum_penalty += sum(info['safety_penalties'].values())
             # Get and accumulate interventions for  current step
             step_interventions = 0
             if self.rl_controllers:
