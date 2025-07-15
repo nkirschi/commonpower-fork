@@ -543,14 +543,15 @@ class DeploymentRunner(BaseRunner):
                 # actions will then be passed on to the Gym environment in the required format.
                 rl_actions = OrderedDict()
                 for ctrl_id, rl_ctrl in self.rl_controllers.items():
-                    if self.alg_config.policy_class == PCNPolicy:
-                        desired_return = np.array([-cum_cost, -cum_penalty])
-                        desired_horizon = n_steps - step
-                        rl_ctrl.policy.set_prediction_parameters(desired_return, desired_horizon)
-                    elif self.alg_config.policy_class == CAPQLPolicy:
-                        alpha = (cum_interventions / (step + 1)) ** 0.25  # frequency of interventions
-                        preference_vector = np.array([1 - alpha, alpha])  # TODO this is just a heuristic
-                        rl_ctrl.policy.set_prediction_parameters(preference_vector)
+                    if hasattr(self.alg_config, 'policy_class'):
+                        if self.alg_config.policy_class == PCNPolicy:
+                            desired_return = np.array([-cum_cost, -cum_penalty])
+                            desired_horizon = n_steps - step
+                            rl_ctrl.policy.set_prediction_parameters(desired_return, desired_horizon)
+                        elif self.alg_config.policy_class == CAPQLPolicy:
+                            alpha = (cum_interventions / (step + 1)) ** 0.25  # frequency of interventions
+                            preference_vector = np.array([1 - alpha, alpha])  # TODO this is just a heuristic
+                            rl_ctrl.policy.set_prediction_parameters(preference_vector)
                     ctrl_obs = obs[ctrl_id]
                     rl_actions[ctrl_id], _ = rl_ctrl.compute_control_input(obs=ctrl_obs, input_callback=None)
             else:
@@ -607,7 +608,7 @@ class DeploymentRunner(BaseRunner):
         if self.start_time is not None:
             self.fixed_start = self.start_time
 
-        if self.alg_config and not isinstance(self.alg_config, MAPPOBaseConfig):
+        if self.alg_config and hasattr(self.alg_config, 'policy_class'):
             is_morl = self.alg_config.policy_class.is_morl
         else:
             is_morl = False
