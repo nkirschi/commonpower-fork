@@ -2,6 +2,7 @@ from enum import Enum, auto
 
 from commonpower.control.policies.pcn_policy import PCNPolicy
 from commonpower.control.policies.ppo_policy import PPOPolicy
+from commonpower.control.policies.sac_policy import SACPolicy
 
 
 class CEnum(Enum):
@@ -29,15 +30,16 @@ class Penalty(CEnum):
 
 class RLAlgorithm(CEnum):
     PPO = auto()
+    SAC = auto()
     PCN = auto()
 
-    def is_morl(self):
-        return self in [RLAlgorithm.PCN]
-
     def to_policy_class(self):
-        if self == RLAlgorithm.PCN:
-            return PCNPolicy
-        elif self == RLAlgorithm.PPO:
-            return PPOPolicy
-        else:
-            raise ValueError(f"Unsupported RL algorithm: {self}")
+        match self:
+            case RLAlgorithm.PPO:
+                return PPOPolicy
+            case RLAlgorithm.SAC:
+                return SACPolicy
+            case RLAlgorithm.PCN:
+                return PCNPolicy
+            case _:
+                raise ValueError(f"Unsupported RL algorithm: {self}")

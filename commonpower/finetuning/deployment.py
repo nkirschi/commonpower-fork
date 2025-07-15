@@ -58,7 +58,7 @@ def run_deployment(
             policy_class=rl_algorithm.to_policy_class(),
             algorithm_config=algo_config,
         )
-    model_dir = os.path.join(os.getcwd(), 'models', save_path, str(train_seed))
+    model_dir = os.path.join(os.getcwd(), 'final_models', save_path, str(train_seed))
     # specify path for results
     results_dir = os.path.join(os.getcwd(), 'results', save_path, str(train_seed))
     os.makedirs(results_dir, exist_ok=True)
@@ -92,31 +92,31 @@ def run_deployment(
         deployer.run(n_steps=n_eval_steps)
 
         results_df = pd.DataFrame(deployer.deployment_log)
-        results_df['cum_cost'] = -results_df['cum_reward']
-        results_df = results_df[['cum_cost', 'cum_reward', 'n_interventions']]
+        results_df = results_df[['cum_cost', 'cum_penalty', 'cum_interventions']]
         results_df.to_csv(results_dir + "/seed_results.csv")
+        print(results_df)
 
         final_cost = results_df['cum_cost'].iloc[-1]
         print(f"Cumulative cost: {final_cost} €")
 
 
 if __name__ == "__main__":
-    approach = Approach.OptimalController  # Approach.WithProjectionSafeguard
+    approach = Approach.WithProjectionSafeguard  # Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
     rl_algorithm = RLAlgorithm.PCN  # RLAlgorithm.PCN or RLAlgorithm.PPO or None if Approach.OptimalController
 
-    ppo_variant = "PPO_80-20"  # PPO_50-50
+    scalarisation_code = "80-20"  # 50-50
 
     if approach is Approach.OptimalController:
         save_path = f'{scenario_constructor.name}/{approach.name}'
         # Set to None for Approach.OptimalController if not already for
         rl_algorithm = None
         algo_config = None
-    elif rl_algorithm == RLAlgorithm.PPO:
-        save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{ppo_variant}'
-    else:  # PCN
-        save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
+
+    save_path = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
+    if not rl_algorithm.to_policy_class().is_morl:
+        save_path += f'_{scalarisation_code}'
 
     # Set the evaluation time frame - one year starting on January 1st
     # (quite time intensive, could also change to evaluating over multiple weeks during the year but less accurate)

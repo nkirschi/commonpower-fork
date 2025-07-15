@@ -532,8 +532,9 @@ class DeploymentRunner(BaseRunner):
         obs, _ = self.env.reset()
 
         self.deployment_log = []
-        cumulative_reward = 0
-        cumulative_interventions = 0
+        cum_cost = 0.0
+        cum_penalty = 0.0
+        cum_interventions = 0.0
 
         for step in tqdm(range(n_steps)):
             if self.rl_controllers:
@@ -541,6 +542,12 @@ class DeploymentRunner(BaseRunner):
                 # actions will then be passed on to the Gym environment in the required format.
                 rl_actions = OrderedDict()
                 for ctrl_id, rl_ctrl in self.rl_controllers.items():
+                    if self.alg_config.policy_class == PCNPolicy:
+                        desired_return = np.array([-cum_cost, -cum_penalty])
+                        desired_horizon = n_steps - step
+                        rl_ctrl.policy.library_specific_policy.set_desired_return_and_horizon(
+                            desired_return, desired_horizon
+                        )
                     ctrl_obs = obs[ctrl_id]
                     rl_actions[ctrl_id], _ = rl_ctrl.compute_control_input(obs=ctrl_obs, input_callback=None)
             else:
@@ -549,9 +556,9 @@ class DeploymentRunner(BaseRunner):
 
             obs, reward, terminated, truncated, info = self.env.step(action=rl_actions)
 
-            # Get and accumulate reward for current step
-            step_reward = sum(reward.values()) if isinstance(reward, dict) else reward
-            cumulative_reward += step_reward
+            # Get and accumulate reward components for current step
+            cum_cost += -reward[0]
+            cum_penalty += -reward[1]
             # Get and accumulate interventions for  current step
             step_interventions = 0
             if self.rl_controllers:
@@ -559,9 +566,15 @@ class DeploymentRunner(BaseRunner):
                     if rl_ctrl.deployment_history and rl_ctrl.deployment_history[0]["action_corrected"]:
                         # Get intervention flag (1 if corrected, 0 otherwise) from last recorded action
                         step_interventions += rl_ctrl.deployment_history[0]["action_corrected"][-1][1]
-            cumulative_interventions += step_interventions
+            cum_interventions += step_interventions
 
-            self.deployment_log.append({'cum_reward': cumulative_reward, 'n_interventions': cumulative_interventions})
+            self.deployment_log.append(
+                {
+                    'cum_cost': cum_cost,
+                    'cum_penalty': cum_penalty,
+                    'cum_interventions': cum_interventions,
+                }
+            )
 
             if step == n_steps - 1:
                 # terminal step
@@ -601,6 +614,7 @@ class DeploymentRunner(BaseRunner):
                 normalize_actions=self.normalize_actions,
                 history=self.history,
                 morl=is_morl,
+                scalarisation_fn=None,  # we always want the objectives separately during deployment
             )
         )
         # set train flag of environment to False

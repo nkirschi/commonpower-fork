@@ -128,6 +128,9 @@ if __name__ == "__main__":
 
         # ID for this training run. Naming convention from original code
         run_id = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
+        if not rl_algorithm.to_policy_class().is_morl:
+            scalarisation_code = f'{int(100 * preference_vector[0])}-{int(100 * preference_vector[1])}'
+            run_id += f'_{scalarisation_code}'
 
         date_format = "%Y-%m-%d %H:%M:00"
         start = datetime.strptime(start_time, date_format)
