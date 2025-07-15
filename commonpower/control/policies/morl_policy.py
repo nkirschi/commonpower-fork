@@ -6,7 +6,7 @@ from commonpower.control.policies.base_policy import BasePolicy
 
 class MORLPolicy(BasePolicy):
     """
-    TODO
+    Facade for policies from the MORL Baselines library (https://lucasalegre.github.io/morl-baselines/)
     """
 
     is_morl = True

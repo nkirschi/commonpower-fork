@@ -10,8 +10,7 @@ from commonpower.control.policies.morl_policy import MORLPolicy
 
 class PCNPolicy(MORLPolicy):
     """
-    PCNPolicy is a policy that uses the PCN (Power Control Network) to control the power consumption of devices.
-    It inherits from BasePolicy and implements the necessary methods to interact with the PCN.
+    Facade for morl-baseline's PCN policy.
     """
 
     def __init__(self, env: Env, seed: int, callback=None, **library_specific_kwargs):

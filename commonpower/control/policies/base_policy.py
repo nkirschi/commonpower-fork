@@ -5,6 +5,10 @@ from gymnasium import Env
 
 
 class BasePolicy(ABC):
+    """
+    Abstraction of a generic policy object that is capable of learning, inference, and saving/loading.
+    """
+
     @staticmethod
     @abstractmethod
     def is_morl():

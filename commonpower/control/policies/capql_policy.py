@@ -10,8 +10,7 @@ from commonpower.control.policies.morl_policy import MORLPolicy
 
 class CAPQLPolicy(MORLPolicy):
     """
-    CAPQLPolicy is a policy that uses Concave-Augmented Pareto Q-Learning to control the power consumption of devices.
-    It inherits from BasePolicy and implements the necessary methods to perform CAPQL.
+    Facade for morl-baseline's CAPQL policy.
     """
 
     def __init__(self, env: Env, seed: int, callback=None, **library_specific_kwargs):

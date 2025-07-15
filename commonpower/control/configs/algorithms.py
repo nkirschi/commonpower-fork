@@ -12,7 +12,7 @@ class AlgorithmBaseConfig(BaseModel):
 
 
 class PPO_Config(AlgorithmBaseConfig):
-    batch_size: int = 12  # since as default we use small amount of data per update, we also use a smaller batch size
+    batch_size: int = 64  # SB3 PPO default
     learning_rate: float = 0.0003  # SB3 PPO default
     n_steps: int = 24  # corresponds to 24 time steps, so 1 day if tau=1h
     policy: str = 'MlpPolicy'
@@ -30,9 +30,9 @@ class PPO_Config(AlgorithmBaseConfig):
 
 
 class SAC_Config(AlgorithmBaseConfig):
-    batch_size: int = 12  # since as default we use small amount of data per update, we also use a smaller batch size
+    batch_size: int = 256  # SB3 SAC default
     learning_rate: float = 0.0003  # SB3 SAC default
-    train_freq: int = 24  # same as "n_steps" in PPO
+    train_freq: int = 1  # SB3 SAC default
     policy: str = 'MlpPolicy'
     policy_kwargs: dict = dict(net_arch=dict(pi=[64, 64], qf=[64, 64]))
     buffer_size: int = 1000000  # SB3 SAC default
@@ -46,10 +46,10 @@ class SAC_Config(AlgorithmBaseConfig):
 
 
 class PCN_Config(AlgorithmBaseConfig):
-    hidden_dim: int = 64  # MORL-Baselines PCN default
-    scaling_factor: float = 1.0  # we do not scale by default
     batch_size: int = 256  # MORL-Baselines PCN default
     learning_rate: float = 0.001  # MORL-Baselines PCN default
+    hidden_dim: int = 64  # MORL-Baselines PCN default
+    scaling_factor: float = 1.0  # we do not scale by default
     num_er_episodes: int = 20  # MORL-Baselines PCN default
     num_step_episodes: int = 10  # MORL-Baselines PCN default
     num_model_updates: int = 50  # MORL-Baselines PCN default

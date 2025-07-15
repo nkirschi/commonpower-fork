@@ -3,7 +3,14 @@ import os
 import numpy as np
 from scenarios import *
 
-from commonpower.control.configs.algorithms import AlgorithmBaseConfig, CAPQL_Config, MetaConfig, PCN_Config, PPO_Config
+from commonpower.control.configs.algorithms import (
+    AlgorithmBaseConfig,
+    CAPQL_Config,
+    MetaConfig,
+    PCN_Config,
+    PPO_Config,
+    SAC_Config,
+)
 from commonpower.control.logging_utils.loggers import *
 from commonpower.control.runners import SingleAgentTrainer
 from commonpower.control.wrappers import *
@@ -101,7 +108,7 @@ if __name__ == "__main__":
     scenario_constructor = Scenario.AddedEVScenario
     approach = Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty
-    rl_algorithm = RLAlgorithm.PPO  # PPO or PCN
+    rl_algorithm = RLAlgorithm.PPO  # one of [PPO, SAC, PCN, CAPQL]
     preference_vector = np.array([0.5, 0.5])  # only applied for single-objective RL algorithms
 
     # END CONFIGURATION #
@@ -146,7 +153,13 @@ if __name__ == "__main__":
                     n_epochs=5,
                 )
             case RLAlgorithm.SAC:
-                pass
+                algo_config = SAC_Config(
+                    device=device,
+                    n_steps=episode_length,
+                    batch_size=episode_length,
+                    learning_rate=0.008,
+                    train_freq=(1, 'episode'),
+                )
             case RLAlgorithm.PCN:
                 algo_config = PCN_Config(device=device, batch_size=episode_length, num_er_episodes=n_episodes // 10)
             case RLAlgorithm.CAPQL:
