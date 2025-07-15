@@ -4,7 +4,6 @@ Collection of pre-defined controller types.
 
 from __future__ import annotations
 
-import os
 import warnings
 from collections import OrderedDict
 from copy import copy, deepcopy
@@ -708,7 +707,7 @@ class RLController(RLBaseController):
         """
         # has to be implemented by subclasses
         self.policy = policy
-        self.policy.save(os.path.join(save_path, 'model.zip'))
+        self.policy.save(save_path)
 
     def load(self, env, config: dict, policy_kwargs: dict = None):
         """
@@ -742,7 +741,7 @@ class RLController(RLBaseController):
             **config.algorithm_config.model_dump(),  # pydantic Model to dictionary
         )
 
-        self.policy.load(os.path.join(self.load_path, 'model.zip'))
+        self.policy.load(self.load_path)
         # ugly hack to overwrite the seed in in self.policy.load (which will be done with the seed used during training)
         set_random_seed(seed=config.seed)
 

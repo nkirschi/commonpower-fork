@@ -8,18 +8,18 @@ from commonpower.control.policies.base_policy import BasePolicy
 
 class AlgorithmBaseConfig(BaseModel):
     device: str = 'cpu'
-    batch_size: int = 12  # since as default we use small amount of data per update, we also use a smaller batch size
-    learning_rate: float = 0.0003
+    gamma: float = 0.99
 
 
 class PPO_Config(AlgorithmBaseConfig):
+    batch_size: int = 12  # since as default we use small amount of data per update, we also use a smaller batch size
+    learning_rate: float = 0.0003  # SB3 PPO default
     n_steps: int = 24  # corresponds to 24 time steps, so 1 day if tau=1h
     policy: str = 'MlpPolicy'
     policy_kwargs: dict = dict(net_arch=dict(pi=[64, 64], vf=[64, 64]), log_std_init=0, squash_output=False)
     use_sde: bool = False  # SB3 PPO default
     sde_sample_freq: int = -1  # SB3 PPO default
     n_epochs: int = 10  # SB3 PPO default
-    gamma: float = 0.99  # SB3 PPO default
     gae_lambda: float = 0.95  # SB3 PPO default
     clip_range: float = 0.2  # SB3 PPO default
     clip_range_vf: float = None  # SB3 PPO default
@@ -30,13 +30,14 @@ class PPO_Config(AlgorithmBaseConfig):
 
 
 class SAC_Config(AlgorithmBaseConfig):
+    batch_size: int = 12  # since as default we use small amount of data per update, we also use a smaller batch size
+    learning_rate: float = 0.0003  # SB3 SAC default
     train_freq: int = 24  # same as "n_steps" in PPO
     policy: str = 'MlpPolicy'
     policy_kwargs: dict = dict(net_arch=dict(pi=[64, 64], qf=[64, 64]))
     buffer_size: int = 1000000  # SB3 SAC default
     learning_starts: int = 100  # SB3 SAC default
     tau: float = 0.005  # SB3 SAC default
-    gamma: float = 0.99  # SB3 SAC default
     gradient_steps: int = 1  # SB3 SAC default
     target_update_interval: int = 1  # SB3 SAC default
     use_sde: bool = False  # SB3 SAC default
@@ -45,7 +46,6 @@ class SAC_Config(AlgorithmBaseConfig):
 
 
 class PCN_Config(AlgorithmBaseConfig):
-    gamma: float = 1.0  # MORL-Baselines PCN default
     hidden_dim: int = 64  # MORL-Baselines PCN default
     scaling_factor: float = 1.0  # we do not scale by default
     batch_size: int = 256  # MORL-Baselines PCN default
@@ -57,6 +57,22 @@ class PCN_Config(AlgorithmBaseConfig):
     max_buffer_size: int = 100  # MORL-Baselines PCN default
     num_points_pf: int = 100  # MORL-Baselines PCN default
     model_config = ConfigDict(arbitrary_types_allowed=True)  # necessary for ndarray
+
+
+class CAPQL_Config(AlgorithmBaseConfig):
+    batch_size: int = 128  # MORL-Baselines CAPQL default
+    learning_rate: float = 0.0003  # MORL-Baselines CAPQL default
+    tau: float = 0.005  # MORL-Baselines CAPQL default
+    buffer_size: int = 1000000  # MORL-Baselines CAPQL default
+    net_arch: list = [256, 256]  # MORL-Baselines CAPQL default
+    num_q_nets: int = 2  # MORL-Baselines CAPQL default
+    alpha: float = 0.2  # MORL-Baselines CAPQL default
+    learning_starts: int = 1000  # MORL-Baselines CAPQL default
+    gradient_updates: int = 1  # MORL-Baselines CAPQL default
+    num_eval_weights_for_front: int = 100  # MORL-Baselines CAPQL default
+    num_eval_episodes_for_front: int = 5  # MORL-Baselines CAPQL default
+    num_eval_weights_for_eval: int = 50  # MORL-Baselines CAPQL default
+    eval_freq: int = 10000  # MORL-Baselines CAPQL default
 
 
 class MetaConfig(BaseModel):

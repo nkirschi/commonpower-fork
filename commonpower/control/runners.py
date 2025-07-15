@@ -26,6 +26,7 @@ from commonpower.control.controllers import OptimalController, RLBaseController
 from commonpower.control.environments import ControlEnv, default_scalarisation_fn
 from commonpower.control.logging_utils.loggers import BaseLogger, TensorboardLogger
 from commonpower.control.policies.base_policy import BasePolicy
+from commonpower.control.policies.capql_policy import CAPQLPolicy
 from commonpower.control.policies.pcn_policy import PCNPolicy
 from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.policies.sac_policy import SACPolicy
@@ -545,9 +546,11 @@ class DeploymentRunner(BaseRunner):
                     if self.alg_config.policy_class == PCNPolicy:
                         desired_return = np.array([-cum_cost, -cum_penalty])
                         desired_horizon = n_steps - step
-                        rl_ctrl.policy.library_specific_policy.set_desired_return_and_horizon(
-                            desired_return, desired_horizon
-                        )
+                        rl_ctrl.policy.set_prediction_parameters(desired_return, desired_horizon)
+                    elif self.alg_config.policy_class == CAPQLPolicy:
+                        alpha = (cum_interventions / (step + 1)) ** 0.25  # frequency of interventions
+                        preference_vector = np.array([1 - alpha, alpha])  # TODO this is just a heuristic
+                        rl_ctrl.policy.set_prediction_parameters(preference_vector)
                     ctrl_obs = obs[ctrl_id]
                     rl_actions[ctrl_id], _ = rl_ctrl.compute_control_input(obs=ctrl_obs, input_callback=None)
             else:

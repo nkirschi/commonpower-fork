@@ -6,6 +6,7 @@ wandb/
 docs/source/tutorials/saved_models/
 *.ipynb_checkpoints/
 *build
+*.lock
 _*
 !__init__.py
 .pytest_cache

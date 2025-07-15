@@ -22,6 +22,8 @@ class BasePolicy(ABC):
                                      (currently: Stable Baselines 3 or MORL-Baslines).
             callback (optional): Callback to be used during training.
         """
+        self.env = env
+        self.seed = seed
         self.callback = callback
 
         if self.callback:

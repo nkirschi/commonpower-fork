@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from gymnasium import Env
 from stable_baselines3 import PPO
@@ -21,10 +23,10 @@ class PPOPolicy(BasePolicy):
         return self.library_specific_policy.get_env()
 
     def load(self, path: str) -> None:
-        self.library_specific_policy = self.library_specific_policy.load(path)
+        self.library_specific_policy = self.library_specific_policy.load(os.join(path, 'model.zip'))
 
     def save(self, path: str) -> None:
-        self.library_specific_policy.save(path)
+        self.library_specific_policy.save(os.join(path, 'model.zip'))
 
     def learn(self, total_timesteps: int, **kwargs) -> None:
         log_interval = kwargs['log_interval']

@@ -3,7 +3,7 @@ import os
 import numpy as np
 from scenarios import *
 
-from commonpower.control.configs.algorithms import AlgorithmBaseConfig, MetaConfig, PCN_Config, PPO_Config
+from commonpower.control.configs.algorithms import AlgorithmBaseConfig, CAPQL_Config, MetaConfig, PCN_Config, PPO_Config
 from commonpower.control.logging_utils.loggers import *
 from commonpower.control.runners import SingleAgentTrainer
 from commonpower.control.wrappers import *
@@ -24,10 +24,7 @@ def run_experiment(
     scalarisation_fn: Optional[callable],
     ref_point: np.ndarray | None,
 ):
-    if rl_algorithm == RLAlgorithm.PCN:
-        total_steps = n_episodes * algo_config.num_step_episodes
-    elif rl_algorithm == RLAlgorithm.PPO:
-        total_steps = n_episodes * algo_config.n_steps
+    total_steps = n_episodes * episode_length
 
     train_config = MetaConfig(
         total_steps=total_steps,
@@ -139,21 +136,21 @@ if __name__ == "__main__":
         horizon = getattr(deployment_runner, "horizon")
         episode_length = 1 + (end - start).total_seconds() // 3600  # entire period in hours
 
-        if rl_algorithm == RLAlgorithm.PCN:
-            algo_config = PCN_Config(
-                device=device,
-                num_step_episodes=episode_length,
-                batch_size=episode_length,
-            )
-        elif rl_algorithm == RLAlgorithm.PPO:
-            algo_config = PPO_Config(
-                device=device,
-                n_steps=episode_length,
-                batch_size=episode_length,
-                learning_rate=0.0008,
-                n_epochs=5,
-                policy_kwargs=dict(log_std_init=0),
-            )
+        match rl_algorithm:
+            case RLAlgorithm.PPO:
+                algo_config = PPO_Config(
+                    device=device,
+                    n_steps=episode_length,
+                    batch_size=episode_length,
+                    learning_rate=0.008,
+                    n_epochs=5,
+                )
+            case RLAlgorithm.SAC:
+                pass
+            case RLAlgorithm.PCN:
+                algo_config = PCN_Config(device=device, batch_size=episode_length, num_er_episodes=n_episodes // 10)
+            case RLAlgorithm.CAPQL:
+                algo_config = CAPQL_Config(device=device, batch_size=episode_length)
 
         run_experiment(
             run_id=run_id,

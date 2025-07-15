@@ -146,25 +146,32 @@ if __name__ == "__main__":
         horizon = getattr(deployment_runner, "horizon")
 
         # set up configuration for the PCN/PPO algorithm
-        if approach is Approach.OptimalController:
+        if approach == Approach.OptimalController:
             algo_config = None
-        elif rl_algorithm == RLAlgorithm.PCN:
-            algo_config = PCN_Config(
-                device=device,
-                n_steps=n_eval_steps,
-                batch_size=24,
-            )
-        elif rl_algorithm == RLAlgorithm.PPO:
-            algo_config = PPO_Config(
-                device=device,
-                n_steps=96,
-                batch_size=24,
-                learning_rate=0.0008,
-                n_epochs=5,
-                policy_kwargs=dict(log_std_init=-2),
-            )
         else:
-            raise NotImplementedError(f"Configuration for {rl_algorithm} is not defined.")
+            match rl_algorithm:
+                case RLAlgorithm.PCN:
+                    algo_config = PCN_Config(
+                        device=device,
+                        n_steps=n_eval_steps,
+                        batch_size=24,
+                    )
+                case RLAlgorithm.PPO:
+                    algo_config = PPO_Config(
+                        device=device,
+                        n_steps=96,
+                        batch_size=24,
+                        learning_rate=0.0008,
+                        n_epochs=5,
+                        policy_kwargs=dict(log_std_init=-2),
+                    )
+                case RLAlgorithm.CAPQL:
+                    algo_config = CAPQL_Config(
+                        device=device,
+                        batch_size=24,
+                    )
+                case _:
+                    raise NotImplementedError(f"Configuration for {rl_algorithm} is not defined.")
 
         run_deployment(
             scenario=scenario,
