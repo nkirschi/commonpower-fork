@@ -8,30 +8,17 @@ from commonpower.control.wrappers import *
 
 
 def compute_average_results_over_seeds(results_dir, seeds):
-    for i, seed in enumerate(seeds):
-        if i == 0:
-            all_results = pd.read_csv(results_dir + f'/{seed}/seed_results.csv', index_col=0)
-        else:
-            seed_df = pd.read_csv(results_dir + f'/{seed}/seed_results.csv', index_col=0)
-            all_results = pd.concat([all_results, seed_df], ignore_index=True, axis=0)
-
-    mean_std_df = pd.DataFrame(
-        columns=[
-            "total_cum_reward",
-            "cum_reward_mean",
-            "cum_reward_std",
-            "n_interventions_mean",
-            "n_interventions_std",
-        ],
-        index=[0],
+    all_results = pd.concat(
+        [pd.read_csv(results_dir + f'/{seed}/seed_results.csv', index_col=0).tail(1) for seed in seeds],
+        ignore_index=True,
+        axis=0,
     )
 
-    for key in all_results.keys():
-        mean_std_df[key + "_mean"] = all_results[key].mean()
-        mean_std_df[key + "_std"] = all_results[key].std()
+    mean_std_df = pd.DataFrame()
 
-    # we are also interested in the mean (over seeds) of the sum of returns over the five eval episodes
-    mean_std_df["total_cum_reward"] = all_results["cum_reward"].sum() / len(seeds)
+    for key in all_results.keys():
+        mean_std_df.loc[0, key + "_mean"] = f'{all_results[key].mean():.2f}'
+        mean_std_df.loc[0, key + "_std"] = f'{all_results[key].std():.2f}'
 
     mean_std_df.to_csv(results_dir + "/approach_results.csv")
 
