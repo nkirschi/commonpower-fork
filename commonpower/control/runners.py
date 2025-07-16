@@ -564,7 +564,7 @@ class DeploymentRunner(BaseRunner):
                 cum_cost += -reward[0]
                 cum_penalty += -reward[1]
             else:
-                cum_cost += -reward
+                cum_cost += -sum(reward) if isinstance(reward, list) else -reward
                 cum_penalty += sum(info['safety_penalties'].values())
             # Get and accumulate interventions for  current step
             step_interventions = 0
