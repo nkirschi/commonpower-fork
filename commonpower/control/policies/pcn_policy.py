@@ -44,11 +44,11 @@ class PCNPolicy(MORLPolicy):
 
     def load(self, path: str) -> None:
         self.library_specific_policy.model = torch.load(
-            os.join(path, 'model.zip'), map_location=self.library_specific_policy.device, weights_only=False
+            os.path.join(path, 'model.zip'), map_location=self.library_specific_policy.device, weights_only=False
         )
 
     def save(self, path: str) -> None:
-        torch.save(self.library_specific_policy.model, os.join(path, 'model.zip'))
+        torch.save(self.library_specific_policy.model, os.path.join(path, 'model.zip'))
 
     def predict(self, obs: np.ndarray, deterministic: bool = False) -> np.ndarray:
         return self.library_specific_policy.eval(obs), None
