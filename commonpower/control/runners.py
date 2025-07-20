@@ -549,7 +549,8 @@ class DeploymentRunner(BaseRunner):
                             desired_horizon = n_steps - step
                             rl_ctrl.policy.set_prediction_parameters(desired_return, desired_horizon)
                         elif self.alg_config.policy_class == CAPQLPolicy:
-                            alpha = (cum_interventions / (step + 1)) ** 0.25  # frequency of interventions
+                            # alpha = (cum_interventions / (step + 1)) ** 0.25  # frequency of interventions
+                            alpha = 0.5
                             preference_vector = np.array([1 - alpha, alpha])  # TODO this is just a heuristic
                             rl_ctrl.policy.set_prediction_parameters(preference_vector)
                     ctrl_obs = obs[ctrl_id]
