@@ -46,11 +46,11 @@ class CAPQLPolicy(MORLPolicy):
             return load_backup(path, map_location, weights_only=False)
 
         torch.load = load_override
-        self.library_specific_policy.load(path=os.path.join(path, 'model.tar'))
+        self.library_specific_policy.load(path=os.path.join(path, 'model.tar'), load_replay_buffer=False)
         torch.load = load_backup
 
     def save(self, path: str) -> None:
-        self.library_specific_policy.save(save_dir=path, filename='model')
+        self.library_specific_policy.save(save_dir=path, filename='model', save_replay_buffer=False)
 
     def predict(self, obs: np.ndarray, deterministic: bool = False) -> np.ndarray:
         if self.preference_vector is None:
