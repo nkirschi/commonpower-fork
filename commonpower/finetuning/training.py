@@ -6,6 +6,7 @@ from scenarios import *
 from commonpower.control.configs.algorithms import (
     AlgorithmBaseConfig,
     CAPQL_Config,
+    GPIPD_Config,
     MetaConfig,
     PCN_Config,
     PPO_Config,
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     scenario_constructor = Scenario.AddedEVScenario
     approach = Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty
-    rl_algorithm = RLAlgorithm.PPO  # one of [PPO, SAC, PCN, CAPQL]
+    rl_algorithm = RLAlgorithm.GPIPD  # one of [PPO, SAC, PCN, CAPQL, GPIPD]
     preference_vector = np.array([0.5, 0.5])  # only applied for single-objective RL algorithms
 
     # END CONFIGURATION #
@@ -163,7 +164,9 @@ if __name__ == "__main__":
             case RLAlgorithm.PCN:
                 algo_config = PCN_Config(device=device, batch_size=episode_length, num_er_episodes=n_episodes // 10)
             case RLAlgorithm.CAPQL:
-                algo_config = CAPQL_Config(device=device, batch_size=episode_length)
+                algo_config = CAPQL_Config(device=device, batch_size=episode_length, checkpoints=True)
+            case RLAlgorithm.GPIPD:
+                algo_config = GPIPD_Config(device=device, batch_size=episode_length, checkpoints=True)
 
         run_experiment(
             run_id=run_id,

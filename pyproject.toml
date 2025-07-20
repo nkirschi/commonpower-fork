@@ -41,6 +41,7 @@ dependencies = [
   "pymongo",
   "pre-commit>=4.2.0",
   "morl-baselines",
+  "python-cdd",  # needed for PGIPD in morl-baselines
 ]
 
 [project.optional-dependencies]

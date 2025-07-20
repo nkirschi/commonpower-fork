@@ -3,14 +3,14 @@ import os
 import numpy as np
 import torch
 from gymnasium import Env
-from morl_baselines.multi_policy.capql.capql import CAPQL
+from morl_baselines.multi_policy.gpi_pd.gpi_pd_continuous_action import GPIPDContinuousAction
 
 from commonpower.control.policies.morl_policy import MORLPolicy
 
 
-class CAPQLPolicy(MORLPolicy):
+class GPIPDPolicy(MORLPolicy):
     """
-    Facade for morl-baseline's CAPQL policy.
+    Facade for morl-baseline's GPIPD policy.
     """
 
     def __init__(self, env: Env, seed: int, callback=None, **library_specific_kwargs):
@@ -23,8 +23,6 @@ class CAPQLPolicy(MORLPolicy):
             'tau',
             'buffer_size',
             'net_arch',
-            'num_q_nets',
-            'alpha',
             'learning_starts',
             'gradient_updates',
             'project_name',
@@ -36,7 +34,7 @@ class CAPQLPolicy(MORLPolicy):
         self.init_kwargs = {k: v for k, v in library_specific_kwargs.items() if k in init_keys}
         self.learn_kwargs = {k: v for k, v in library_specific_kwargs.items() if k not in init_keys}
 
-        self.library_specific_policy = CAPQL(env=env, seed=seed, **self.init_kwargs)
+        self.library_specific_policy = GPIPDContinuousAction(env=env, seed=seed, **self.init_kwargs)
 
     def load(self, path: str) -> None:
         # TODO once morl-baseline udpated, remove this hack (see https://github.com/LucasAlegre/morl-baselines/pull/158)

@@ -1,6 +1,7 @@
 from enum import Enum, auto
 
 from commonpower.control.policies.capql_policy import CAPQLPolicy
+from commonpower.control.policies.gpipd_policy import GPIPDPolicy
 from commonpower.control.policies.pcn_policy import PCNPolicy
 from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.policies.sac_policy import SACPolicy
@@ -34,6 +35,7 @@ class RLAlgorithm(CEnum):
     SAC = auto()
     PCN = auto()
     CAPQL = auto()
+    GPIPD = auto()
 
     def to_policy_class(self):
         match self:
@@ -45,5 +47,7 @@ class RLAlgorithm(CEnum):
                 return PCNPolicy
             case RLAlgorithm.CAPQL:
                 return CAPQLPolicy
+            case RLAlgorithm.GPIPD:
+                return GPIPDPolicy
             case _:
                 raise ValueError(f"Unsupported RL algorithm: {self}")

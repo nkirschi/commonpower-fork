@@ -75,6 +75,21 @@ class CAPQL_Config(AlgorithmBaseConfig):
     eval_freq: int = 10000  # MORL-Baselines CAPQL default
 
 
+class GPIPD_Config(AlgorithmBaseConfig):
+    batch_size: int = 128  # MORL-Baselines CAPQL default
+    learning_rate: float = 0.0003  # MORL-Baselines CAPQL default
+    tau: float = 1.0  # MORL-Baselines CAPQL default
+    buffer_size: int = 1000000  # MORL-Baselines CAPQL default
+    net_arch: list = [256, 256, 256, 256]  # MORL-Baselines CAPQL default
+    learning_starts: int = 100  # MORL-Baselines CAPQL default
+    gradient_updates: int = 20  # MORL-Baselines CAPQL default
+    num_eval_weights_for_front: int = 100  # MORL-Baselines CAPQL default
+    num_eval_episodes_for_front: int = 5  # MORL-Baselines CAPQL default
+    num_eval_weights_for_eval: int = 50  # MORL-Baselines CAPQL default
+    eval_freq: int = 1000  # MORL-Baselines CAPQL default
+    eval_mo_freq: int = 10000  # MORL-Baselines CAPQL default
+
+
 class MetaConfig(BaseModel):
     total_steps: int
     policy_class: Type[BasePolicy]

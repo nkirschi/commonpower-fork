@@ -399,7 +399,7 @@ class MORLEnv(gym.Env):
         self.action_space = self.envs[0].action_space
 
         self.spec = EnvSpec(
-            id="MORLEnv-v0",
+            id="mo-highway-v0",  # ugly hack to get the appropriate termination function for GPIPD defined
             entry_point=None,
             max_episode_steps=episode_length,
         )
