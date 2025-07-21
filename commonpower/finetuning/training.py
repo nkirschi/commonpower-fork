@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     # scaling hyperparameters
     seeds = [1, 2, 3, 4, 5]
-    n_episodes = 1000
+    n_episodes = 500
     forecast_length = 6
     start_time = "2016-07-01 00:00:00"
     end_time = "2016-07-31 23:00:00"
@@ -162,11 +162,11 @@ if __name__ == "__main__":
                     train_freq=episode_length,
                 )
             case RLAlgorithm.PCN:
-                algo_config = PCN_Config(device=device, batch_size=episode_length, num_er_episodes=n_episodes // 10)
+                algo_config = PCN_Config(device=device, batch_size=episode_length)
             case RLAlgorithm.CAPQL:
-                algo_config = CAPQL_Config(device=device, batch_size=episode_length, checkpoints=True)
+                algo_config = CAPQL_Config(device=device, batch_size=episode_length, eval_freq=1e9, checkpoints=True)
             case RLAlgorithm.GPIPD:
-                algo_config = GPIPD_Config(device=device, batch_size=episode_length, checkpoints=True)
+                algo_config = GPIPD_Config(device=device, batch_size=episode_length, eval_freq=1e9, checkpoints=True)
 
         run_experiment(
             run_id=run_id,
