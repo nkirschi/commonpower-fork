@@ -6,17 +6,19 @@ wandb/
 docs/source/tutorials/saved_models/
 *.ipynb_checkpoints/
 *build
-*.lock
 _*
 !__init__.py
 .pytest_cache
 .venv
-venv
 .vscode/
 test_run/
 tuner/
+# TODO remove the below before merging into main
 commonpower/finetuning/models/*
 commonpower/finetuning/results/*
 commonpower/finetuning/weights/*
 commonpower/finetuning/tensorboard/*
+commonpower/finetuning/*.out
 commonpower/finetuning/*.sh
+uv.lock
+venv
