@@ -31,7 +31,7 @@ class PCNPolicy(MORLPolicy):
             'experiment_name',
         ]
         self.init_kwargs = {k: v for k, v in library_specific_kwargs.items() if k in constructor_keys}
-        self.train_kwargs = {k: v for k, v in library_specific_kwargs.items() if k not in constructor_keys}
+        self.learn_kwargs = {k: v for k, v in library_specific_kwargs.items() if k not in constructor_keys}
 
         self.library_specific_policy = PCN(env=env, seed=seed, **self.init_kwargs)
 
