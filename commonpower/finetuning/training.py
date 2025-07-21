@@ -98,8 +98,8 @@ if __name__ == "__main__":
     # BEGIN CONFIGURATION #
 
     # scaling hyperparameters
-    seeds = [1]  # [1, 2, 3, 4, 5]
-    n_episodes = 100  # 1000
+    seeds = [1, 2, 3, 4, 5]
+    n_episodes = 1000
     forecast_length = 6
     start_time = "2016-07-01 00:00:00"
     end_time = "2016-07-31 23:00:00"
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     scenario_constructor = Scenario.AddedEVScenario
     approach = Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty
-    rl_algorithm = RLAlgorithm.GPIPD  # one of [PPO, SAC, PCN, CAPQL, GPIPD]
+    rl_algorithm = RLAlgorithm.CAPQL  # one of [PPO, SAC, PCN, CAPQL, GPIPD]
     preference_vector = np.array([0.5, 0.5])  # only applied for single-objective RL algorithms
 
     # END CONFIGURATION #
