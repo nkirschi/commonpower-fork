@@ -27,6 +27,7 @@ from commonpower.control.environments import ControlEnv, default_scalarisation_f
 from commonpower.control.logging_utils.loggers import BaseLogger, TensorboardLogger
 from commonpower.control.policies.base_policy import BasePolicy
 from commonpower.control.policies.capql_policy import CAPQLPolicy
+from commonpower.control.policies.gpipd_policy import GPIPDPolicy
 from commonpower.control.policies.pcn_policy import PCNPolicy
 from commonpower.control.policies.ppo_policy import PPOPolicy
 from commonpower.control.policies.sac_policy import SACPolicy
@@ -537,6 +538,11 @@ class DeploymentRunner(BaseRunner):
         cum_penalty = 0.0
         cum_interventions = 0.0
 
+        running_avg_interventions = 0.0
+        safety_weight = 0.0
+        critical_safety_weight = 0.0
+        intervention_flag = 0
+
         for step in tqdm(range(n_steps)):
             if self.rl_controllers:
                 # we loop through all RL controllers to compute their actions given the current state. The union of all
@@ -548,10 +554,18 @@ class DeploymentRunner(BaseRunner):
                             desired_return = np.array([-cum_cost, -cum_penalty])
                             desired_horizon = n_steps - step
                             rl_ctrl.policy.set_prediction_parameters(desired_return, desired_horizon)
-                        elif self.alg_config.policy_class == CAPQLPolicy:
-                            # alpha = (cum_interventions / (step + 1)) ** 0.25  # frequency of interventions
-                            alpha = 0.5
-                            preference_vector = np.array([1 - alpha, alpha])  # TODO this is just a heuristic
+                        elif self.alg_config.policy_class in [CAPQLPolicy, GPIPDPolicy]:
+                            ema_threshold = 0.1 * 0.9**10
+                            if intervention_flag:  # intervention in the last step
+                                critical_safety_weight = safety_weight + 0.01
+                            if running_avg_interventions > ema_threshold:  # intervention in the last 10 steps
+                                safety_weight = 0.5
+                            else:
+                                safety_weight = (
+                                    critical_safety_weight
+                                    + (0.5 - critical_safety_weight) * running_avg_interventions / ema_threshold
+                                )
+                            preference_vector = np.array([1 - safety_weight, safety_weight])
                             rl_ctrl.policy.set_prediction_parameters(preference_vector)
                     ctrl_obs = obs[ctrl_id]
                     rl_actions[ctrl_id], _ = rl_ctrl.compute_control_input(obs=ctrl_obs, input_callback=None)
@@ -573,7 +587,9 @@ class DeploymentRunner(BaseRunner):
                 for rl_ctrl in self.rl_controllers.values():
                     if rl_ctrl.deployment_history and rl_ctrl.deployment_history[0]["action_corrected"]:
                         # Get intervention flag (1 if corrected, 0 otherwise) from last recorded action
-                        step_interventions += rl_ctrl.deployment_history[0]["action_corrected"][-1][1]
+                        intervention_flag = rl_ctrl.deployment_history[0]["action_corrected"][-1][1]
+                        step_interventions += intervention_flag
+                        running_avg_interventions = 0.9 * running_avg_interventions + 0.1 * intervention_flag
             cum_interventions += step_interventions
 
             self.deployment_log.append(
