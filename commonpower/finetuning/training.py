@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Process
 
 import numpy as np
 from scenarios import *
@@ -117,68 +118,78 @@ if __name__ == "__main__":
     scalarisation_fn = linear_scalariser(preference_vector) if not rl_algorithm.to_policy_class().is_morl else None
     ref_point = calculate_ref_point(scenario_constructor) if rl_algorithm.to_policy_class().is_morl else None
     stage = Stage.Train
-    forecaster = PersistenceForecaster(
-        frequency=timedelta(hours=1), horizon=timedelta(hours=forecast_length), look_back=timedelta(hours=24)
-    )
 
     for seed in seeds:
-        train_sys, deployment_runner = create_scenario(
-            stage=stage,
-            scenario_constructor=scenario_constructor.value,
-            approach=approach,
-            penalty=penalty,
-            forecast_length=forecast_length,
-            forecaster=forecaster,
-        )
 
-        # ID for this training run. Naming convention from original code
-        run_id = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
-        if not rl_algorithm.to_policy_class().is_morl:
-            scalarisation_code = f'{int(100 * preference_vector[0])}-{int(100 * preference_vector[1])}'
-            run_id += f'_{scalarisation_code}'
+        def subprocess_run(seed):
+            forecaster = PersistenceForecaster(
+                frequency=timedelta(hours=1), horizon=timedelta(hours=forecast_length), look_back=timedelta(hours=24)
+            )
+            train_sys, deployment_runner = create_scenario(
+                stage=stage,
+                scenario_constructor=scenario_constructor.value,
+                approach=approach,
+                penalty=penalty,
+                forecast_length=forecast_length,
+                forecaster=forecaster,
+            )
 
-        date_format = "%Y-%m-%d %H:%M:00"
-        start = datetime.strptime(start_time, date_format)
-        end = datetime.strptime(end_time, date_format)
+            # ID for this training run. Naming convention from original code
+            run_id = f'{scenario_constructor.name}/{approach.name}/{penalty.name}/{rl_algorithm.name}'
+            if not rl_algorithm.to_policy_class().is_morl:
+                scalarisation_code = f'{int(100 * preference_vector[0])}-{int(100 * preference_vector[1])}'
+                run_id += f'_{scalarisation_code}'
 
-        horizon = getattr(deployment_runner, "horizon")
-        episode_length = 1 + (end - start).total_seconds() // 3600  # entire period in hours
+            date_format = "%Y-%m-%d %H:%M:00"
+            start = datetime.strptime(start_time, date_format)
+            end = datetime.strptime(end_time, date_format)
 
-        match rl_algorithm:
-            case RLAlgorithm.PPO:
-                algo_config = PPO_Config(
-                    device=device,
-                    n_steps=episode_length,
-                    batch_size=episode_length,
-                    learning_rate=0.008,
-                    n_epochs=5,
-                )
-            case RLAlgorithm.SAC:
-                algo_config = SAC_Config(
-                    device=device,
-                    n_steps=episode_length,
-                    batch_size=episode_length,
-                    learning_rate=0.008,
-                    train_freq=episode_length,
-                )
-            case RLAlgorithm.PCN:
-                algo_config = PCN_Config(device=device, batch_size=episode_length)
-            case RLAlgorithm.CAPQL:
-                algo_config = CAPQL_Config(device=device, batch_size=episode_length, eval_freq=1e9, checkpoints=True)
-            case RLAlgorithm.GPIPD:
-                algo_config = GPIPD_Config(device=device, batch_size=episode_length, eval_freq=1e9, checkpoints=True)
+            horizon = getattr(deployment_runner, "horizon")
+            episode_length = 1 + (end - start).total_seconds() // 3600  # entire period in hours
 
-        run_experiment(
-            run_id=run_id,
-            algo_config=algo_config,
-            seed=seed,
-            n_episodes=n_episodes,
-            forecast_horizon=horizon,
-            episode_length=episode_length,
-            train_sys=train_sys,
-            rl_algorithm=rl_algorithm,
-            fixed_start=start,
-            limited_date_range=[start, end],
-            scalarisation_fn=scalarisation_fn,
-            ref_point=ref_point,
-        )
+            match rl_algorithm:
+                case RLAlgorithm.PPO:
+                    algo_config = PPO_Config(
+                        device=device,
+                        n_steps=episode_length,
+                        batch_size=episode_length,
+                        learning_rate=0.008,
+                        n_epochs=5,
+                    )
+                case RLAlgorithm.SAC:
+                    algo_config = SAC_Config(
+                        device=device,
+                        n_steps=episode_length,
+                        batch_size=episode_length,
+                        learning_rate=0.008,
+                        train_freq=episode_length,
+                    )
+                case RLAlgorithm.PCN:
+                    algo_config = PCN_Config(device=device, batch_size=episode_length)
+                case RLAlgorithm.CAPQL:
+                    algo_config = CAPQL_Config(
+                        device=device, batch_size=episode_length, eval_freq=1e9, checkpoints=True
+                    )
+                case RLAlgorithm.GPIPD:
+                    algo_config = GPIPD_Config(
+                        device=device, batch_size=episode_length, eval_freq=1e9, checkpoints=True
+                    )
+
+            run_experiment(
+                run_id=run_id,
+                algo_config=algo_config,
+                seed=seed,
+                n_episodes=n_episodes,
+                forecast_horizon=horizon,
+                episode_length=episode_length,
+                train_sys=train_sys,
+                rl_algorithm=rl_algorithm,
+                fixed_start=start,
+                limited_date_range=[start, end],
+                scalarisation_fn=scalarisation_fn,
+                ref_point=ref_point,
+            )
+
+    p = Process(target=subprocess_run, args=(seed,))
+    p.start()
+    p.join()
