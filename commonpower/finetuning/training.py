@@ -190,6 +190,6 @@ if __name__ == "__main__":
                 ref_point=ref_point,
             )
 
-    p = Process(target=subprocess_run, args=(seed,))
-    p.start()
-    p.join()
+        p = Process(target=subprocess_run, args=(seed,))
+        p.start()
+        p.join()
