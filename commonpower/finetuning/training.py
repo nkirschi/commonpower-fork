@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     # scaling hyperparameters
     seeds = [1, 2, 3, 4, 5]
-    n_episodes = 500
+    n_episodes = 1000
     forecast_length = 6
     start_time = "2016-07-01 00:00:00"
     end_time = "2016-07-31 23:00:00"
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     scenario_constructor = Scenario.AddedEVScenario
     approach = Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty
-    rl_algorithm = RLAlgorithm.CAPQL  # one of [PPO, SAC, PCN, CAPQL, GPIPD]
+    rl_algorithm = RLAlgorithm.PPO  # one of [PPO, SAC, PCN, CAPQL, GPIPD]
     preference_vector = np.array([0.5, 0.5])  # only applied for single-objective RL algorithms
 
     # END CONFIGURATION #
@@ -153,7 +153,7 @@ if __name__ == "__main__":
                         device=device,
                         n_steps=episode_length,
                         batch_size=episode_length,
-                        learning_rate=0.008,
+                        learning_rate=0.0008,
                         n_epochs=5,
                     )
                 case RLAlgorithm.SAC:
@@ -161,7 +161,7 @@ if __name__ == "__main__":
                         device=device,
                         n_steps=episode_length,
                         batch_size=episode_length,
-                        learning_rate=0.008,
+                        learning_rate=0.0008,
                         train_freq=episode_length,
                     )
                 case RLAlgorithm.PCN:
