@@ -91,7 +91,7 @@ if __name__ == "__main__":
     approach = Approach.WithProjectionSafeguard  # Approach.WithProjectionSafeguard
     penalty = Penalty.DDPenalty  # Penalty.NoPenalty
     scenario_constructor = Scenario.AddedEVScenario
-    rl_algorithm = RLAlgorithm.PPO  # RLAlgorithm.PCN or RLAlgorithm.PPO or None if Approach.OptimalController
+    rl_algorithm = RLAlgorithm.PPO  # None if Approach.OptimalController
 
     scalarisation_code = "50-50"  # 50-50
 
