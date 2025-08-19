@@ -11,7 +11,7 @@ class BasePolicy(ABC):
 
     @staticmethod
     @abstractmethod
-    def is_morl():
+    def is_morl() -> bool:
         """
         Whether the policy is learnt with a MORL algorithm.
         """
@@ -49,9 +49,6 @@ class BasePolicy(ABC):
 
         Args:
             path (str): Path to the file (or a file-like) where to load the agent from
-
-        Returns:
-            New model instance with loaded parameters
         """
 
     @abstractmethod
@@ -71,9 +68,6 @@ class BasePolicy(ABC):
         Args:
             total_timesteps (int): The number of timesteps to train the policy for.
             **kwargs: Additional keyword arguments that may be required by the specific policy implementation.
-
-        Returns:
-            The trained model
         """
 
     @abstractmethod
