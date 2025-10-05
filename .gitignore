@@ -5,6 +5,7 @@ runs/
 wandb/
 docs/source/tutorials/saved_models/
 *.ipynb_checkpoints/
+*.zip
 *build
 _*
 !__init__.py
@@ -13,12 +14,4 @@ _*
 .vscode/
 test_run/
 tuner/
-# TODO remove the below before merging into main
-commonpower/finetuning/models/*
-commonpower/finetuning/results/*
-commonpower/finetuning/weights/*
-commonpower/finetuning/tensorboard/*
-commonpower/finetuning/*.out
-commonpower/finetuning/*.sh
-uv.lock
-venv
+results/
